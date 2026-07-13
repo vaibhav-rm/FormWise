@@ -79,7 +79,6 @@ export default function Import() {
   const [statusFilter, setStatusFilter] = useState("all")
   const [selectedImport, setSelectedImport] = useState(null)
   const [showPreviewModal, setShowPreviewModal] = useState(false)
-  const [showMappingModal, setShowMappingModal] = useState(false)
   const [uploadProgress, setUploadProgress] = useState(0)
   const [isUploading, setIsUploading] = useState(false)
 

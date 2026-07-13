@@ -52,9 +52,6 @@ import { useNotifications } from "../hooks/use-notifications"
 
 import { useAuth } from "../hooks/use-auth"
 
-import AdvancedAnalyticsWidget from "../components/advanced-analytics-widget"
-import FormInsightsWidget from "../components/form-insights-widget"
-
 // Replace the mock stats with real data
 export default function Dashboard() {
   const [searchTerm, setSearchTerm] = useState("")
@@ -200,7 +197,6 @@ export default function Dashboard() {
       title: "Analytics & Reports",
       items: [
         { icon: <BarChart3 className="w-5 h-5" />, label: "Analytics", path: "/analytics" },
-        { icon: <TrendingUp className="w-5 h-5" />, label: "Reports", path: "/reports" },
       ],
     },
     {
@@ -217,7 +213,6 @@ export default function Dashboard() {
         { icon: <User className="w-5 h-5" />, label: "Profile", path: "/profile" },
         { icon: <Settings className="w-5 h-5" />, label: "Settings", path: "/settings" },
         { icon: <CreditCard className="w-5 h-5" />, label: "Billing", path: "/billing" },
-        { icon: <Shield className="w-5 h-5" />, label: "Security", path: "/security" },
         { icon: <Bell className="w-5 h-5" />, label: "Notifications", path: "/notifications" },
       ],
     },
@@ -226,7 +221,6 @@ export default function Dashboard() {
       items: [
         { icon: <HelpCircle className="w-5 h-5" />, label: "Help Center", path: "/help" },
         { icon: <Mail className="w-5 h-5" />, label: "Contact Support", path: "/support" },
-        { icon: <FileText className="w-5 h-5" />, label: "Documentation", path: "/docs" },
       ],
     },
   ]
@@ -236,7 +230,7 @@ export default function Dashboard() {
       event.stopPropagation()
     }
 
-    const shareableLink = `${import.meta.env.VITE_SERVER_URL}/form/${formId}`
+    const shareableLink = `${window.location.origin}/form/${formId}`
 
     try {
       // Copy the link to the clipboard

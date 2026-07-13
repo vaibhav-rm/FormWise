@@ -20,25 +20,25 @@ export default function FormViewer() {
   const [formData, setFormData] = useState({})
 
   useEffect(() => {
-    loadForm()
-  }, [formId])
-
-  const loadForm = async () => {
-    try {
-      const formData = await getForm(formId)
-      if (formData && formData.status === "published") {
-        setForm(formData)
-        await incrementFormViews(formId)
-      } else {
+    const loadForm = async () => {
+      try {
+        const formData = await getForm(formId)
+        if (formData && formData.status === "published") {
+          setForm(formData)
+          await incrementFormViews(formId)
+        } else {
+          navigate("/404")
+        }
+      } catch (error) {
+        console.error("Error loading form:", error)
         navigate("/404")
+      } finally {
+        setLoading(false)
       }
-    } catch (error) {
-      console.error("Error loading form:", error)
-      navigate("/404")
-    } finally {
-      setLoading(false)
     }
-  }
+
+    loadForm()
+  }, [formId, getForm, incrementFormViews, navigate])
 
   const validateField = (field, value) => {
     if (field.required && (!value || value.toString().trim() === "")) {
@@ -115,7 +115,7 @@ export default function FormViewer() {
       setSubmitted(true)
     } catch (error) {
       console.error("Error submitting form:", error)
-      alert("Failed to submit form. Please try again.", error)
+      alert("Failed to submit form. Please try again.")
     } finally {
       setSubmitting(false)
     }
@@ -299,6 +299,10 @@ export default function FormViewer() {
         </div>
       </div>
     )
+  }
+
+  if (!form) {
+    return null
   }
 
   if (submitted) {

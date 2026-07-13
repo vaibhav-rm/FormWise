@@ -9,7 +9,6 @@ import {
   BarChart3,
   Settings,
   CreditCard,
-  Users,
   HelpCircle,
   LogOut,
   ChevronLeft,
@@ -26,10 +25,9 @@ export default function Sidebar() {
 
   const menuItems = [
     { icon: <LayoutDashboard className="w-5 h-5" />, label: "Dashboard", path: "/dashboard" },
-    { icon: <FileText className="w-5 h-5" />, label: "Forms", path: "/builder" },
+    { icon: <FileText className="w-5 h-5" />, label: "Forms", path: "/forms" },
     { icon: <BarChart3 className="w-5 h-5" />, label: "Analytics", path: "/analytics" },
     { icon: <Palette className="w-5 h-5" />, label: "Templates", path: "/templates" },
-    { icon: <Users className="w-5 h-5" />, label: "Team", path: "/team" },
     { icon: <Settings className="w-5 h-5" />, label: "Settings", path: "/settings" },
     { icon: <CreditCard className="w-5 h-5" />, label: "Billing", path: "/billing" },
   ]
@@ -84,7 +82,7 @@ export default function Sidebar() {
           {menuItems.map((item, index) => {
             const isActive =
               location.pathname === item.path ||
-              (item.path === "/builder" && location.pathname.startsWith("/builder")) ||
+              (item.path === "/forms" && (location.pathname.startsWith("/forms") || location.pathname.startsWith("/builder"))) ||
               (item.path === "/analytics" && location.pathname.startsWith("/analytics"))
 
             return (

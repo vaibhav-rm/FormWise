@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { Link } from "react-router-dom"
 import { motion } from "framer-motion"
-import { format, subDays, eachDayOfInterval, startOfDay, endOfDay, isToday } from "date-fns"
+import { format, subDays, eachDayOfInterval, isToday } from "date-fns"
 import {
   BarChart,
   Bar,
@@ -49,7 +49,7 @@ const getDateRange = (days) => {
 
 const Analytics = () => {
   const { user } = useAuth()
-  const { analytics, loading: loadingAnalytics } = useFormsAnalytics()
+  const { loading: loadingAnalytics } = useFormsAnalytics()
   const { forms, loading: loadingForms } = useForms()
   const [dateRange, setDateRange] = useState("30")
   const [responseData, setResponseData] = useState([])
@@ -83,11 +83,6 @@ const Analytics = () => {
 
       try {
         const range = getDateRange(Number.parseInt(dateRange))
-        const startTimestamp = Timestamp.fromDate(startOfDay(range.start))
-        const endTimestamp = Timestamp.fromDate(endOfDay(range.end))
-
-        console.log("Fetching analytics for date range:", range.start, "to", range.end)
-        console.log("Available forms:", forms.length)
 
         // Calculate basic stats from forms
         const activeForms = forms.filter((form) => form.status === "published").length
@@ -134,7 +129,6 @@ const Analytics = () => {
           allResponses = [...allResponses, ...batchResponses]
         }
 
-        console.log("Total responses found:", allResponses.length)
 
         // Filter responses by date range
         const filteredResponses = allResponses.filter((response) => {
@@ -142,7 +136,6 @@ const Analytics = () => {
           return responseDate >= range.start && responseDate <= range.end
         })
 
-        console.log("Filtered responses for date range:", filteredResponses.length)
 
         // Update total responses count
         setTotalStats((prev) => ({
@@ -156,10 +149,13 @@ const Analytics = () => {
           const dayStr = format(day, "yyyy-MM-dd")
           const dayResponses = filteredResponses.filter((r) => format(r.submittedAt, "yyyy-MM-dd") === dayStr)
 
-          // Simulate views as 2-5x responses for demo purposes
+          // Use actual form view data proportionally or fallback to responses * 3
+          const totalFormViews = forms.reduce((sum, f) => sum + (f.views || 0), 0)
+          const avgViewsPerResponse = totalFormViews > 0 && allResponses.length > 0
+            ? totalFormViews / allResponses.length
+            : 3
           const responseCount = dayResponses.length
-          const viewCount =
-            responseCount > 0 ? Math.round(responseCount * (Math.random() * 3 + 2)) : Math.round(Math.random() * 10)
+          const viewCount = Math.round(responseCount * avgViewsPerResponse)
 
           return {
             date: dayStr,
@@ -169,12 +165,10 @@ const Analytics = () => {
           }
         })
 
-        console.log("Daily response data:", dailyResponses)
         setResponseData(dailyResponses)
         setViewsData(dailyResponses)
 
         // Process hourly data for today
-        const today = new Date()
         const todayResponses = filteredResponses.filter((r) => isToday(r.submittedAt))
 
         const hourlyStats = Array.from({ length: 24 }, (_, hour) => {
@@ -206,14 +200,13 @@ const Analytics = () => {
         })
 
         const deviceChartData = Object.entries(devices)
-          .filter(([name, value]) => value > 0)
+          .filter(([, value]) => value > 0)
           .map(([name, value]) => ({
             name,
             value,
             percentage: filteredResponses.length > 0 ? ((value / filteredResponses.length) * 100).toFixed(1) : 0,
           }))
 
-        console.log("Device data:", deviceChartData)
         setDeviceData(deviceChartData)
 
         // Calculate conversion rate
@@ -250,7 +243,6 @@ const Analytics = () => {
         formPerformance.sort((a, b) => b.responses - a.responses)
         setTopForms(formPerformance.slice(0, 10))
 
-        console.log("Top forms:", formPerformance.slice(0, 5))
       } catch (error) {
         console.error("Error fetching analytics data:", error)
       } finally {
@@ -356,7 +348,7 @@ const Analytics = () => {
                 Create your first form to start collecting data and see analytics here.
               </p>
               <Link
-                to="/form-builder/new"
+                to="/builder/new"
                 className={`inline-flex items-center bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors ${
                   isMobile ? "px-4 py-2 text-sm" : "px-6 py-3"
                 }`}

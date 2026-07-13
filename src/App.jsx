@@ -47,6 +47,14 @@ function AppRoutes() {
     <Routes>
       <Route path="/" element={<LandingPage />} />
       <Route path="/auth" element={<AuthPage />} />
+      <Route path="/contact" element={<ContactPage />} />
+      <Route path="/help" element={<Help />} />
+      <Route path="/support" element={<Support />} />
+
+      {/* Public form viewer */}
+      <Route path="/form/:formId" element={<FormViewer />} />
+
+      {/* Protected routes */}
       <Route
         path="/dashboard"
         element={
@@ -95,20 +103,23 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
-      <Route path="/form/:formId" element={<FormViewer />} />
-      <Route path="/form-responses/:formId" element={
-                  <ProtectedRoute>
-                    <FormResponses />
-                  </ProtectedRoute>
-                    } />
-      <Route path="/contact" element={<ContactPage />} />
-      <Route path="*" element={<NotFoundPage />} />
-      <Route path="/notifications" element={<Notifications />} />
-            <Route path="/help" element={<Help />} />
-                        <Route path="/support" element={<Support />} />
-
-
-            <Route
+      <Route
+        path="/form-responses/:formId"
+        element={
+          <ProtectedRoute>
+            <FormResponses />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/notifications"
+        element={
+          <ProtectedRoute>
+            <Notifications />
+          </ProtectedRoute>
+        }
+      />
+      <Route
         path="/forms"
         element={
           <ProtectedRoute>
@@ -116,8 +127,7 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
-
-                  <Route
+      <Route
         path="/profile"
         element={
           <ProtectedRoute>
@@ -125,7 +135,7 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
-                        <Route
+      <Route
         path="/import"
         element={
           <ProtectedRoute>
@@ -133,7 +143,7 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
-                        <Route
+      <Route
         path="/integrations"
         element={
           <ProtectedRoute>
@@ -141,7 +151,7 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
-                        <Route
+      <Route
         path="/webhooks"
         element={
           <ProtectedRoute>
@@ -149,6 +159,9 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
+
+      {/* Catch-all: must be last */}
+      <Route path="*" element={<NotFoundPage />} />
     </Routes>
   )
 }

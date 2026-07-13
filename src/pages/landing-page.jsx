@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Helmet } from "react-helmet"
 import { useNavigate } from "react-router-dom"
@@ -41,17 +41,14 @@ const Header = () => {
   const [isScrolled, setIsScrolled] = useState(false)
   const navigate = useNavigate()
 
-  const handleScroll = useCallback(
-    debounce(() => {
-      setIsScrolled(window.scrollY > 20)
-    }, 100),
-    [],
-  )
-
   useEffect(() => {
+    const handleScroll = debounce(() => {
+      setIsScrolled(window.scrollY > 20)
+    }, 100)
+
     window.addEventListener("scroll", handleScroll)
     return () => window.removeEventListener("scroll", handleScroll)
-  }, [handleScroll])
+  }, [])
 
   return (
     <motion.header

@@ -41,8 +41,6 @@ export default function Forms() {
   const { forms, loading: formsLoading, deleteForm, duplicateForm } = useForms()
   const [searchTerm, setSearchTerm] = useState("")
   const [isMobile, setIsMobile] = useState(false)
-  const [showMobileMenu, setShowMobileMenu] = useState(false)
-  const [showMobileFilters, setShowMobileFilters] = useState(false)
   const [showMobileActions, setShowMobileActions] = useState(null)
   const [viewMode, setViewMode] = useState("list")
   const [sortBy, setSortBy] = useState("recent")
@@ -72,7 +70,7 @@ export default function Forms() {
   const [showCreateTag, setShowCreateTag] = useState(false)
   const [newTagName, setNewTagName] = useState("")
   const [newTagColor, setNewTagColor] = useState("blue")
-  const [showSidebar, setShowSidebar] = useState(true)
+  const [showSidebar] = useState(true)
   const navigate = useNavigate()
   const mobileActionsRef = useRef(null)
 
@@ -180,7 +178,7 @@ export default function Forms() {
       event.stopPropagation()
     }
 
-    const shareableLink = `${window.location.origin}/form-viewer/${formId}`
+    const shareableLink = `${window.location.origin}/form/${formId}`
 
     try {
       // Copy the link to the clipboard

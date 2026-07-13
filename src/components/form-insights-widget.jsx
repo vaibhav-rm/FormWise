@@ -4,7 +4,7 @@ import { useState } from "react"
 import { motion } from "framer-motion"
 import { TrendingUp, AlertTriangle, CheckCircle, Clock, MessageSquare } from "lucide-react"
 
-export default function FormInsightsWidget({ forms, analytics }) {
+export default function FormInsightsWidget({ forms }) {
   const [selectedInsight, setSelectedInsight] = useState("performance")
 
   // Generate insights based on form data

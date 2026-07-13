@@ -89,7 +89,7 @@ export const useForms = () => {
     if (!user) throw new Error("User not authenticated")
 
     try {
-      const validUpdates = Object.fromEntries(Object.entries(updates).filter(([key, value]) => value !== undefined))
+      const validUpdates = Object.fromEntries(Object.entries(updates).filter(([, value]) => value !== undefined))
 
       const formRef = doc(db, "forms", formId)
 
@@ -534,7 +534,7 @@ export const useEnhancedAnalytics = () => {
           formsChange: Math.round(formsChange * 10) / 10,
           responsesChange: Math.round(responsesChange * 10) / 10,
           activeFormsChange: Math.round((activeForms / Math.max(totalForms, 1)) * 100),
-          viewsChange: Math.round(Math.random() * 30 - 10), // Mock for now
+          viewsChange: totalViews > 0 ? Math.round((totalViews / Math.max(totalForms, 1)) * 10) / 10 : 0, // avg views per form
           conversionRate: Math.round(conversionRate * 10) / 10,
           avgResponseTime,
           topPerformingForm,

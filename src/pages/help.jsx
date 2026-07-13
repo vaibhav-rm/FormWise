@@ -23,6 +23,7 @@ export default function Help() {
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedCategory, setSelectedCategory] = useState("all")
   const [isMobile, setIsMobile] = useState(false)
+  const [expandedArticle, setExpandedArticle] = useState(null)
 
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 768)
@@ -48,6 +49,7 @@ export default function Help() {
       category: "getting-started",
       readTime: "5 min read",
       popular: true,
+      content: "FormWise makes it easy to create powerful forms. Start by clicking \"Create New Form\" on your dashboard. Give your form a title and description, then drag and drop fields from the left panel onto the canvas. Once satisfied, click Publish to make it live and share the link with your audience.",
     },
     {
       id: 2,
@@ -56,6 +58,7 @@ export default function Help() {
       category: "form-builder",
       readTime: "8 min read",
       popular: true,
+      content: "Use the Form Builder to add text inputs, dropdowns, checkboxes, ratings, and more. Each field can be configured with a label, placeholder, and validation rules (required, min/max length). Drag fields to reorder them. Use the Design tab to customize colors and fonts. The Settings tab lets you configure thank-you messages and redirect URLs.",
     },
     {
       id: 3,
@@ -64,6 +67,7 @@ export default function Help() {
       category: "analytics",
       readTime: "6 min read",
       popular: false,
+      content: "The Analytics page shows total views, responses, and conversion rate for each form. The conversion rate is calculated as (responses / views) × 100. Use the date range filter to compare performance over time. Click on any form to see individual response data and field-level breakdowns.",
     },
     {
       id: 4,
@@ -72,6 +76,7 @@ export default function Help() {
       category: "integrations",
       readTime: "10 min read",
       popular: true,
+      content: "FormWise supports webhooks and native integrations with popular tools. Navigate to the Integrations page to connect Slack, Zapier, Google Sheets, and more. For webhooks, go to the Webhooks page and add your endpoint URL. Every form submission will POST the response data as JSON to your configured URL.",
     },
     {
       id: 5,
@@ -80,6 +85,7 @@ export default function Help() {
       category: "billing",
       readTime: "4 min read",
       popular: false,
+      content: "Visit the Billing page to view your current plan, usage stats, and invoices. You can upgrade or downgrade at any time — changes take effect immediately. Payment is processed securely via Stripe. To update your payment method, click \"Update Payment Method\" in the Payment Method card.",
     },
   ]
 
@@ -214,32 +220,45 @@ export default function Help() {
                     filteredArticles.map((article) => (
                       <motion.div
                         key={article.id}
-                        className="p-6 hover:bg-gray-50 transition-colors cursor-pointer"
+                        className="border-b border-gray-200 last:border-b-0"
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
-                        onClick={() => navigate(`/help/article/${article.id}`)}
                       >
-                        <div className="flex items-center justify-between">
-                          <div className="flex-1">
-                            <div className="flex items-center space-x-2 mb-2">
-                              <h4 className="font-semibold text-gray-900">{article.title}</h4>
-                              {article.popular && (
-                                <span className="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs rounded-full">
-                                  Popular
+                        <div
+                          className="p-6 hover:bg-gray-50 transition-colors cursor-pointer"
+                          onClick={() => setExpandedArticle(expandedArticle === article.id ? null : article.id)}
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="flex-1">
+                              <div className="flex items-center space-x-2 mb-2">
+                                <h4 className="font-semibold text-gray-900">{article.title}</h4>
+                                {article.popular && (
+                                  <span className="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs rounded-full">
+                                    Popular
+                                  </span>
+                                )}
+                              </div>
+                              <p className="text-gray-600 mb-2">{article.description}</p>
+                              <div className="flex items-center space-x-4 text-sm text-gray-500">
+                                <span className="flex items-center">
+                                  <Clock className="w-4 h-4 mr-1" />
+                                  {article.readTime}
                                 </span>
-                              )}
+                                <span className="capitalize">{article.category.replace("-", " ")}</span>
+                              </div>
                             </div>
-                            <p className="text-gray-600 mb-2">{article.description}</p>
-                            <div className="flex items-center space-x-4 text-sm text-gray-500">
-                              <span className="flex items-center">
-                                <Clock className="w-4 h-4 mr-1" />
-                                {article.readTime}
-                              </span>
-                              <span className="capitalize">{article.category.replace("-", " ")}</span>
-                            </div>
+                            <ChevronRight
+                              className={`w-5 h-5 text-gray-400 transition-transform ${
+                                expandedArticle === article.id ? "rotate-90" : ""
+                              }`}
+                            />
                           </div>
-                          <ChevronRight className="w-5 h-5 text-gray-400" />
                         </div>
+                        {expandedArticle === article.id && (
+                          <div className="px-6 pb-6 bg-purple-50 border-t border-purple-100">
+                            <p className="text-gray-700 leading-relaxed pt-4">{article.content}</p>
+                          </div>
+                        )}
                       </motion.div>
                     ))
                   )}

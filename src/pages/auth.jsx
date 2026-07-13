@@ -23,6 +23,12 @@ export default function AuthPage() {
     }
   }, [user, authLoading, navigate])
 
+  // Clear error and form data on tab switch
+  useEffect(() => {
+    setError("")
+    setFormData({ name: "", email: "", password: "" })
+  }, [isLogin])
+
   const handleSubmit = async (e) => {
     e.preventDefault()
     setLoading(true)

@@ -15,10 +15,6 @@ import {
   HelpCircle,
   LogOut,
   Bell,
-  Folder,
-  Archive,
-  Share2,
-  Star,
   CreditCard,
   Mail,
   Layout,
@@ -68,12 +64,6 @@ const MobileNavigation = ({ activePath }) => {
           path: "/analytics",
           active: activePath === "/analytics",
         },
-        {
-          icon: <FileText className="w-5 h-5" />,
-          label: "Responses",
-          path: "/responses",
-          active: activePath === "/responses",
-        },
       ],
     },
         {
@@ -122,18 +112,7 @@ const MobileNavigation = ({ activePath }) => {
     },
   ]
 
-  const getActiveIcon = (path) => {
-    switch (path) {
-      case "/dashboard":
-        return <Home className="w-5 h-5" />
-      case "/forms":
-        return <FileText className="w-5 h-5" />
-      case "/analytics":
-        return <BarChart3 className="w-5 h-5" />
-      default:
-        return <FileText className="w-5 h-5" />
-    }
-  }
+
 
   return (
     <>
@@ -239,11 +218,11 @@ const MobileNavigation = ({ activePath }) => {
                 <div className="border-t border-gray-200 pt-4 mt-6">
                   <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg mb-3">
                     <div className="w-10 h-10 bg-purple-600 rounded-full flex items-center justify-center text-white font-semibold">
-                      JD
+                      {user?.displayName?.charAt(0)?.toUpperCase() || user?.email?.charAt(0)?.toUpperCase() || "U"}
                     </div>
                     <div>
-                      <p className="font-medium text-gray-900">{user.displayName || "User"}</p>
-                      <p className="text-sm text-gray-500">{user.email || "Email"}</p>
+                      <p className="font-medium text-gray-900">{user?.displayName || "User"}</p>
+                      <p className="text-sm text-gray-500">{user?.email || ""}</p>
                     </div>
                   </div>
                   <button

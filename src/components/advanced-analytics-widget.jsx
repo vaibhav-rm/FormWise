@@ -32,7 +32,7 @@ export default function AdvancedAnalyticsWidget({ analytics, forms }) {
     },
   ]
 
-  const topForms = forms?.sort((a, b) => (b.responseCount || 0) - (a.responseCount || 0)).slice(0, 5) || []
+  const topForms = [...(forms || [])].sort((a, b) => (b.responseCount || 0) - (a.responseCount || 0)).slice(0, 5)
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
@@ -56,7 +56,7 @@ export default function AdvancedAnalyticsWidget({ analytics, forms }) {
 
       {/* Key Metrics */}
       <div className="grid grid-cols-3 gap-4 mb-6">
-        {metrics.map((metric, index) => (
+        {metrics.map((metric) => (
           <motion.div
             key={metric.id}
             className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${

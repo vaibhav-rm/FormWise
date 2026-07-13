@@ -55,7 +55,7 @@ export default function Settings() {
     marketingEmails: false,
   })
 
-  const [teamMembers, setTeamMembers] = useState([
+  const [teamMembers] = useState([
     {
       id: 1,
       name: "John Doe",

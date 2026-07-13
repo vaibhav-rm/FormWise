@@ -5,12 +5,13 @@ import { motion } from "framer-motion"
 import { useNavigate } from "react-router-dom"
 import { CreditCard, Download, Check, ArrowLeft, Star, Menu, X } from "lucide-react"
 import Sidebar from "../components/sidebar"
+import MobileNavigation from "../components/mobile-navigation"
 
 export default function Billing() {
   const navigate = useNavigate()
   const [isMobile, setIsMobile] = useState(false)
   const [isAnnual, setIsAnnual] = useState(true)
-  const [currentPlan, setCurrentPlan] = useState("pro")
+  const [currentPlan] = useState("pro")
   const [showMobileMenu, setShowMobileMenu] = useState(false)
 
   useEffect(() => {
@@ -64,7 +65,8 @@ export default function Billing() {
     <div className="flex h-screen bg-gray-50">
       {!isMobile && <Sidebar />}
 
-      <div className="flex-1 overflow-auto">
+      <div className="flex-1 overflow-auto pb-16 md:pb-0">
+        <div className="p-4 sm:p-6 lg:p-8">
         {/* Mobile Header */}
         {isMobile && (
           <div className="flex items-center justify-between mb-4 bg-white rounded-lg p-3 shadow-sm">
@@ -337,8 +339,11 @@ export default function Billing() {
               </div>
             </div>
           </div>
+          </div>
         </div>
       </div>
+
+      {isMobile && <MobileNavigation activePath="/billing" />}
     </div>
   )
 }
