@@ -48,36 +48,34 @@ export default function Sidebar() {
 
   return (
     <motion.div
-      className={`bg-white border-r border-gray-200 flex flex-col transition-all duration-300 ${
+      className={`bg-white border-r border-gray-200 flex flex-col flex-shrink-0 transition-all duration-300 ${
         isCollapsed ? "w-16" : "w-64"
       }`}
       initial={false}
       animate={{ width: isCollapsed ? 64 : 256 }}
     >
       {/* Header */}
-      <div className="p-4 border-b border-gray-200">
-        <div className="flex items-center justify-between">
-          {!isCollapsed && (
-            <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-gradient-to-r from-purple-600 to-blue-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-sm">F</span>
-              </div>
-              <span className="text-xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
-                FormWise
-              </span>
+      <div className={`p-4 border-b border-gray-200 flex items-center ${isCollapsed ? "justify-center" : "justify-between"}`}>
+        {!isCollapsed && (
+          <div className="flex items-center space-x-2">
+            <div className="w-8 h-8 bg-gradient-to-r from-purple-600 to-blue-600 rounded-lg flex items-center justify-center">
+              <span className="text-white font-bold text-sm">F</span>
             </div>
+            <span className="text-xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
+              FormWise
+            </span>
+          </div>
+        )}
+        <button
+          onClick={() => setIsCollapsed(!isCollapsed)}
+          className="p-1 rounded-lg hover:bg-gray-100 transition-colors flex-shrink-0"
+        >
+          {isCollapsed ? (
+            <ChevronRight className="w-4 h-4 text-gray-600" />
+          ) : (
+            <ChevronLeft className="w-4 h-4 text-gray-600" />
           )}
-          <button
-            onClick={() => setIsCollapsed(!isCollapsed)}
-            className="p-1 rounded-lg hover:bg-gray-100 transition-colors"
-          >
-            {isCollapsed ? (
-              <ChevronRight className="w-4 h-4 text-gray-600" />
-            ) : (
-              <ChevronLeft className="w-4 h-4 text-gray-600" />
-            )}
-          </button>
-        </div>
+        </button>
       </div>
 
       {/* Navigation */}
@@ -92,7 +90,9 @@ export default function Sidebar() {
             return (
               <li key={index}>
                 <motion.button
-                  className={`w-full flex items-center space-x-3 px-3 py-2 rounded-lg transition-colors ${
+                  className={`w-full flex items-center rounded-lg transition-colors ${
+                    isCollapsed ? "justify-center py-2 px-2" : "space-x-3 px-3 py-2"
+                  } ${
                     isActive
                       ? "bg-gradient-to-r from-purple-600 to-blue-600 text-white"
                       : "text-gray-700 hover:bg-gray-100"
@@ -101,7 +101,9 @@ export default function Sidebar() {
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                 >
-                  {item.icon}
+                  <div className="w-5 h-5 flex-shrink-0 flex items-center justify-center">
+                    {item.icon}
+                  </div>
                   {!isCollapsed && <span className="font-medium">{item.label}</span>}
                 </motion.button>
               </li>
@@ -116,12 +118,16 @@ export default function Sidebar() {
           {bottomItems.map((item, index) => (
             <li key={index}>
               <motion.button
-                className="w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100 transition-colors"
+                className={`w-full flex items-center rounded-lg text-gray-700 hover:bg-gray-100 transition-colors ${
+                  isCollapsed ? "justify-center py-2 px-2" : "space-x-3 px-3 py-2"
+                }`}
                 onClick={item.label === "Logout" ? handleLogout : () => navigate(item.path)}
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
               >
-                {item.icon}
+                <div className="w-5 h-5 flex-shrink-0 flex items-center justify-center">
+                  {item.icon}
+                </div>
                 {!isCollapsed && <span className="font-medium">{item.label}</span>}
               </motion.button>
             </li>
