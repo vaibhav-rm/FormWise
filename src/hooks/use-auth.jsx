@@ -84,6 +84,13 @@ export const AuthProvider = ({ children }) => {
           role: "",
           phone: "",
         },
+        subscription: {
+          plan: "free",
+          status: "active",
+          billingCycle: "monthly",
+          createdAt: new Date(),
+        },
+        invoices: [],
       })
 
       return userCredential
@@ -133,6 +140,13 @@ export const AuthProvider = ({ children }) => {
             role: "",
             phone: user.phoneNumber || "",
           },
+          subscription: {
+            plan: "free",
+            status: "active",
+            billingCycle: "monthly",
+            createdAt: new Date(),
+          },
+          invoices: [],
         })
       } else {
         // Existing user - update their last login and any changed info
@@ -195,6 +209,13 @@ export const AuthProvider = ({ children }) => {
             role: "",
             phone: "",
           },
+          subscription: {
+            plan: "free",
+            status: "active",
+            billingCycle: "monthly",
+            createdAt: new Date(),
+          },
+          invoices: [],
         })
       } else {
         // Existing user - update their last login

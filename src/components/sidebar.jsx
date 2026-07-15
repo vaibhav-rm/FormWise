@@ -16,12 +16,16 @@ import {
   Palette,
 } from "lucide-react"
 import { useAuth } from "../hooks/use-auth"
+import { useUserProfile } from "../hooks/use-user-profile"
+import { useForms } from "../hooks/use-forms"
 
 export default function Sidebar() {
   const [isCollapsed, setIsCollapsed] = useState(false)
   const navigate = useNavigate()
   const location = useLocation()
   const { logout } = useAuth()
+  const { userProfile } = useUserProfile()
+  const { forms } = useForms()
 
   const menuItems = [
     { icon: <LayoutDashboard className="w-5 h-5" />, label: "Dashboard", path: "/dashboard" },
@@ -128,22 +132,42 @@ export default function Sidebar() {
           <div className="mt-4 p-3 bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg border border-purple-200">
             <div className="flex items-center space-x-2 mb-2">
               <div className="w-6 h-6 bg-gradient-to-r from-purple-600 to-blue-600 rounded-full flex items-center justify-center">
-                <span className="text-white text-xs font-bold">P</span>
+                <span className="text-white text-xs font-bold uppercase">
+                  {(userProfile?.subscription?.plan || "free")[0]}
+                </span>
               </div>
-              <span className="text-sm font-medium text-gray-900">Pro Plan</span>
+              <span className="text-sm font-medium text-gray-900 capitalize">
+                {userProfile?.subscription?.plan || "free"} Plan
+              </span>
             </div>
-            <p className="text-xs text-gray-600 mb-2">2,847 / 5,000 responses used</p>
+            <p className="text-xs text-gray-600 mb-2">
+              {(() => {
+                const plan = userProfile?.subscription?.plan || "free";
+                const limits = { free: 1000, starter: 10000, pro: 50000 };
+                const limit = limits[plan] || 1000;
+                const totalUsed = forms ? forms.reduce((sum, f) => sum + (f.responseCount || 0), 0) : 0;
+                return `${totalUsed.toLocaleString()} / ${limit.toLocaleString()} responses used`;
+              })()}
+            </p>
             <div className="w-full bg-gray-200 rounded-full h-2 mb-2">
               <div
                 className="bg-gradient-to-r from-purple-600 to-blue-600 h-2 rounded-full"
-                style={{ width: "57%" }}
+                style={{
+                  width: `${(() => {
+                    const plan = userProfile?.subscription?.plan || "free";
+                    const limits = { free: 1000, starter: 10000, pro: 50000 };
+                    const limit = limits[plan] || 1000;
+                    const totalUsed = forms ? forms.reduce((sum, f) => sum + (f.responseCount || 0), 0) : 0;
+                    return Math.min(100, Math.round((totalUsed / limit) * 100));
+                  })()}%`
+                }}
               ></div>
             </div>
             <button
               className="text-xs text-purple-600 hover:text-purple-700 font-medium"
               onClick={() => navigate("/billing")}
             >
-              Upgrade Plan
+              {(userProfile?.subscription?.plan || "free") === "pro" ? "Manage Billing" : "Upgrade Plan"}
             </button>
           </div>
         )}

@@ -20,11 +20,15 @@ import {
 } from "lucide-react"
 import Sidebar from "../components/sidebar"
 import { useAuth } from "../hooks/use-auth"
+import { useUserProfile } from "../hooks/use-user-profile"
+import { useForms } from "../hooks/use-forms"
 import MobileNavigation from "../components/mobile-navigation" // Import MobileNavigation component
 
 export default function Settings() {
   const navigate = useNavigate()
   const { user } = useAuth()
+  const { userProfile } = useUserProfile()
+  const { forms } = useForms()
   const [isMobile, setIsMobile] = useState(false)
   const [activeTab, setActiveTab] = useState("profile")
   const [saving, setSaving] = useState(false)
@@ -329,58 +333,94 @@ export default function Settings() {
     </div>
   )
 
-  const renderBillingTab = () => (
-    <div className="space-y-6">
-      <div>
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Current Plan</h3>
+  const renderBillingTab = () => {
+    const plan = userProfile?.subscription?.plan || "free"
+    const cycle = userProfile?.subscription?.billingCycle || "monthly"
+    const planLimits = {
+      free: { forms: 10, responses: 1000, teamMembers: 1, storage: 0.5 },
+      starter: { forms: 99999, responses: 10000, teamMembers: 5, storage: 5 },
+      pro: { forms: 99999, responses: 50000, teamMembers: 99999, storage: 50 }
+    }
+    const currentLimits = planLimits[plan] || planLimits.free
+    const totalResponsesUsed = forms ? forms.reduce((sum, f) => sum + (f.responseCount || 0), 0) : 0
+    const totalFormsUsed = forms ? forms.length : 0
 
-        <div className="bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg p-6 border border-purple-200">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4">
-            <div>
-              <h4 className="text-xl font-bold text-gray-900">Pro Plan</h4>
-              <p className="text-gray-600">$15/month • Billed monthly</p>
-            </div>
-            <button className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors mt-4 sm:mt-0">
-              Upgrade Plan
-            </button>
-          </div>
+    const formatLimit = (value) => {
+      if (value >= 99999) return "Unlimited"
+      return value.toLocaleString()
+    }
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
-            <div>
-              <p className="text-gray-600">Forms</p>
-              <p className="font-semibold">24 / Unlimited</p>
-            </div>
-            <div>
-              <p className="text-gray-600">Responses</p>
-              <p className="font-semibold">2,847 / 5,000</p>
-            </div>
-            <div>
-              <p className="text-gray-600">Team Members</p>
-              <p className="font-semibold">6 / 10</p>
-            </div>
-          </div>
-        </div>
-      </div>
+    const planPrices = {
+      free: "$0/month",
+      starter: cycle === "annual" ? "$8/month (Billed annually)" : "$10/month",
+      pro: cycle === "annual" ? "$10/month (Billed annually)" : "$15/month"
+    }
 
-      <div>
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Payment Method</h3>
-        <div className="bg-white border border-gray-200 rounded-lg p-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <div className="w-8 h-8 bg-blue-600 rounded flex items-center justify-center">
-                <CreditCard className="w-4 h-4 text-white" />
+    return (
+      <div className="space-y-6">
+        <div>
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Current Plan</h3>
+
+          <div className="bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg p-6 border border-purple-200">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4">
+              <div>
+                <h4 className="text-xl font-bold text-gray-900 capitalize">{plan} Plan</h4>
+                <p className="text-gray-600">{planPrices[plan]}</p>
+              </div>
+              <button
+                className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors mt-4 sm:mt-0"
+                onClick={() => navigate("/billing")}
+              >
+                {plan === "pro" ? "Manage Subscription" : "Upgrade Plan"}
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
+              <div>
+                <p className="text-gray-600">Forms</p>
+                <p className="font-semibold">{totalFormsUsed} / {formatLimit(currentLimits.forms)}</p>
               </div>
               <div>
-                <p className="font-medium">•••• •••• •••• 4242</p>
-                <p className="text-sm text-gray-600">Expires 12/25</p>
+                <p className="text-gray-600">Responses</p>
+                <p className="font-semibold">{totalResponsesUsed.toLocaleString()} / {formatLimit(currentLimits.responses)}</p>
+              </div>
+              <div>
+                <p className="text-gray-600">Team Members</p>
+                <p className="font-semibold">1 / {formatLimit(currentLimits.teamMembers)}</p>
               </div>
             </div>
-            <button className="text-purple-600 hover:text-purple-700 font-medium">Update</button>
+          </div>
+        </div>
+
+        <div>
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Payment Method</h3>
+          <div className="bg-white border border-gray-200 rounded-lg p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <div className="w-8 h-8 bg-purple-600 rounded flex items-center justify-center">
+                  <CreditCard className="w-4 h-4 text-white" />
+                </div>
+                <div>
+                  <p className="font-medium">
+                    {plan === "free" ? "No active card linked" : "Cashfree Payments Integration"}
+                  </p>
+                  <p className="text-sm text-gray-600">
+                    {plan === "free" ? "Upgrade to link card/UPI" : "Payments secured via Cashfree Gateway"}
+                  </p>
+                </div>
+              </div>
+              <button
+                className="text-purple-600 hover:text-purple-700 font-medium"
+                onClick={() => navigate("/billing")}
+              >
+                {plan === "free" ? "Link" : "Manage"}
+              </button>
+            </div>
           </div>
         </div>
       </div>
-    </div>
-  )
+    )
+  }
 
   return (
     <div className="flex h-screen bg-gray-50">
