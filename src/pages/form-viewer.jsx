@@ -5,6 +5,61 @@ import { motion } from "framer-motion"
 import { useParams, useNavigate } from "react-router-dom"
 import { ArrowLeft, Send, CheckCircle, AlertCircle, Star, Upload, ImageIcon, Clock, Shield } from 'lucide-react'
 import { useForms, useFormResponses } from "../hooks/use-forms"
+// Rule matching helpers
+const checkRuleCondition = (rule, data) => {
+  const sourceValue = data[rule.fieldId];
+  const targetValue = rule.value;
+  
+  if (sourceValue === undefined || sourceValue === null) {
+    if (rule.condition === "not_equals") {
+      return targetValue !== "";
+    }
+    return false;
+  }
+
+  const srcStr = sourceValue.toString().trim().toLowerCase();
+  const tgtStr = targetValue.toString().trim().toLowerCase();
+
+  switch (rule.condition) {
+    case "equals":
+      return srcStr === tgtStr;
+    case "not_equals":
+      return srcStr !== tgtStr;
+    case "contains":
+      return srcStr.includes(tgtStr);
+    case "greater_than":
+      return Number(sourceValue) > Number(targetValue);
+    case "less_than":
+      return Number(sourceValue) < Number(targetValue);
+    default:
+      return false;
+  }
+};
+
+const isFieldVisible = (fieldId, logicRules, currentFormData) => {
+  if (!logicRules || logicRules.length === 0) return true;
+  
+  const rules = logicRules.filter(r => r.targetFieldId === fieldId);
+  if (rules.length === 0) return true;
+
+  const showRules = rules.filter(r => r.action === "show");
+  const hideRules = rules.filter(r => r.action === "hide");
+
+  let visible = true;
+
+  if (showRules.length > 0) {
+    visible = showRules.some(rule => checkRuleCondition(rule, currentFormData));
+  }
+
+  if (hideRules.length > 0) {
+    const shouldHide = hideRules.some(rule => checkRuleCondition(rule, currentFormData));
+    if (shouldHide) {
+      visible = false;
+    }
+  }
+
+  return visible;
+};
 
 export default function FormViewer() {
   const { formId } = useParams()
@@ -94,6 +149,9 @@ export default function FormViewer() {
     // Validate all fields
     const newErrors = {}
     form.fields.forEach((field) => {
+      const visible = isFieldVisible(field.id, form.settings?.logicRules, formData)
+      if (!visible) return
+
       const error = validateField(field, formData[field.id])
       if (error) {
         newErrors[field.id] = error
@@ -105,9 +163,17 @@ export default function FormViewer() {
       return
     }
 
+    // Filter out responses for fields that are conditionally hidden
+    const cleanedFormData = {}
+    form.fields.forEach((field) => {
+      if (isFieldVisible(field.id, form.settings?.logicRules, formData)) {
+        cleanedFormData[field.id] = formData[field.id] !== undefined ? formData[field.id] : ""
+      }
+    })
+
     setSubmitting(true)
     try {
-      await submitResponse(formId, formData, {
+      await submitResponse(formId, cleanedFormData, {
         userAgent: navigator.userAgent,
         timestamp: new Date().toISOString(),
         referrer: document.referrer,
@@ -124,9 +190,18 @@ export default function FormViewer() {
   const renderField = (field) => {
     const value = formData[field.id] || ""
     const error = errors[field.id]
-    const baseClasses = `w-full p-3 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all ${
-      error ? "border-red-300 bg-red-50" : "border-gray-300"
-    }`
+
+    const radiusClass = form.settings?.borderRadius || "rounded-lg"
+    let themeClasses = "border border-gray-300 bg-white"
+    if (form.settings?.theme === "classic") {
+      themeClasses = "border-b-2 border-x-0 border-t-0 border-gray-300 bg-[#fafafa] focus:ring-0 rounded-none"
+    } else if (form.settings?.theme === "minimal") {
+      themeClasses = "border border-gray-200 bg-transparent rounded-none focus:ring-0"
+    }
+
+    const baseClasses = `w-full p-3 transition-all outline-none custom-form-input ${themeClasses} ${
+      form.settings?.theme !== "classic" && form.settings?.theme !== "minimal" ? radiusClass : ""
+    } ${error ? "border-red-300 bg-red-50" : "border-gray-300"}`
 
     switch (field.type) {
       case "text":
@@ -182,7 +257,7 @@ export default function FormViewer() {
                       : currentValues.filter((v) => v !== option)
                     handleInputChange(field.id, newValues)
                   }}
-                  className="rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                  className="rounded border-gray-300 custom-form-checkbox focus:ring-0"
                 />
                 <span className="text-gray-700">{option}</span>
               </label>
@@ -201,7 +276,7 @@ export default function FormViewer() {
                   value={option}
                   checked={value === option}
                   onChange={(e) => handleInputChange(field.id, e.target.value)}
-                  className="border-gray-300 text-purple-600 focus:ring-purple-500"
+                  className="border-gray-300 custom-form-radio focus:ring-0"
                 />
                 <span className="text-gray-700">{option}</span>
               </label>
@@ -350,15 +425,33 @@ export default function FormViewer() {
 
         {/* Form */}
         <motion.div
-          className="bg-white rounded-xl sm:rounded-2xl shadow-xl overflow-hidden"
+          className={`bg-white border border-gray-200 transition-all duration-300 ${form.settings?.borderRadius || "rounded-xl"} ${form.settings?.shadowStyle || "shadow-xl"}`}
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
           style={{
             backgroundColor: form.settings?.backgroundColor || "#ffffff",
             color: form.settings?.textColor || "#1f2937",
+            fontFamily: form.settings?.fontFamily || "Inter",
           }}
         >
+          {/* Dynamic Style Tag for Custom Primary Color focus states and fonts */}
+          <style dangerouslySetInnerHTML={{__html: `
+            .custom-form-input:focus {
+              border-color: ${form.settings?.primaryColor || '#7c3aed'} !important;
+              box-shadow: 0 0 0 2px ${(form.settings?.primaryColor || '#7c3aed')}33 !important;
+            }
+            .custom-form-checkbox:checked {
+              background-color: ${form.settings?.primaryColor || '#7c3aed'} !important;
+              border-color: ${form.settings?.primaryColor || '#7c3aed'} !important;
+            }
+            .custom-form-radio:checked {
+              border-color: ${form.settings?.primaryColor || '#7c3aed'} !important;
+            }
+            .custom-form-radio:checked::after {
+              background-color: ${form.settings?.primaryColor || '#7c3aed'} !important;
+            }
+          `}} />
           {/* Form Header */}
           <div className="p-6 sm:p-8 border-b border-gray-200">
             <h1 className="text-2xl sm:text-3xl font-bold mb-4" style={{ color: form.settings?.textColor }}>
@@ -382,31 +475,35 @@ export default function FormViewer() {
           {/* Form Fields */}
           <form onSubmit={handleSubmit} className="p-6 sm:p-8">
             <div className="space-y-6">
-              {form.fields?.map((field, index) => (
-                <motion.div
-                  key={field.id}
-                  className="space-y-2"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.4, delay: index * 0.1 }}
-                >
-                  <label className="block text-sm font-medium text-gray-900">
-                    {field.label}
-                    {field.required && <span className="text-red-500 ml-1">*</span>}
-                  </label>
+              {form.fields?.map((field, index) => {
+                const visible = isFieldVisible(field.id, form.settings?.logicRules, formData);
+                if (!visible) return null;
+                return (
+                  <motion.div
+                    key={field.id}
+                    className="space-y-2"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.4, delay: index * 0.1 }}
+                  >
+                    <label className="block text-sm font-medium text-gray-900">
+                      {field.label}
+                      {field.required && <span className="text-red-500 ml-1">*</span>}
+                    </label>
 
-                  {field.description && <p className="text-sm text-gray-600 mb-2">{field.description}</p>}
+                    {field.description && <p className="text-sm text-gray-600 mb-2">{field.description}</p>}
 
-                  {renderField(field)}
+                    {renderField(field)}
 
-                  {errors[field.id] && (
-                    <div className="flex items-center text-red-600 text-sm mt-1">
-                      <AlertCircle className="w-4 h-4 mr-1" />
-                      {errors[field.id]}
-                    </div>
-                  )}
-                </motion.div>
-              ))}
+                    {errors[field.id] && (
+                      <div className="flex items-center text-red-600 text-sm mt-1">
+                        <AlertCircle className="w-4 h-4 mr-1" />
+                        {errors[field.id]}
+                      </div>
+                    )}
+                  </motion.div>
+                )
+              })}
             </div>
 
             {/* Submit Button */}
@@ -414,7 +511,11 @@ export default function FormViewer() {
               <motion.button
                 type="submit"
                 disabled={submitting}
-                className="w-full bg-gradient-to-r from-purple-600 to-blue-600 text-white py-3 sm:py-4 px-6 rounded-lg font-semibold hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                className="w-full text-white py-3 sm:py-4 px-6 font-semibold hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                style={{
+                  backgroundColor: form.settings?.primaryColor || "#7c3aed",
+                  borderRadius: form.settings?.borderRadius === "rounded-none" ? "0px" : form.settings?.borderRadius === "rounded-md" ? "6px" : form.settings?.borderRadius === "rounded-lg" ? "8px" : form.settings?.borderRadius === "rounded-xl" ? "12px" : form.settings?.borderRadius === "rounded-3xl" ? "24px" : "12px",
+                }}
                 whileHover={{ scale: submitting ? 1 : 1.02 }}
                 whileTap={{ scale: submitting ? 1 : 0.98 }}
               >

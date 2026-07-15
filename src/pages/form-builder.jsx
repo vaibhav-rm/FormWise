@@ -46,11 +46,68 @@ import {
   Code,
   QrCode,
   MessageSquare,
+  Undo,
+  Redo,
 } from "lucide-react"
 import Sidebar from "../components/sidebar"
 import MobileNavigation from "../components/mobile-navigation"
 import { useForms } from "../hooks/use-forms"
 import { useAuth } from "../hooks/use-auth"
+// Rule matching helpers
+const checkRuleCondition = (rule, data) => {
+  const sourceValue = data[rule.fieldId];
+  const targetValue = rule.value;
+  
+  if (sourceValue === undefined || sourceValue === null) {
+    if (rule.condition === "not_equals") {
+      return targetValue !== "";
+    }
+    return false;
+  }
+
+  const srcStr = sourceValue.toString().trim().toLowerCase();
+  const tgtStr = targetValue.toString().trim().toLowerCase();
+
+  switch (rule.condition) {
+    case "equals":
+      return srcStr === tgtStr;
+    case "not_equals":
+      return srcStr !== tgtStr;
+    case "contains":
+      return srcStr.includes(tgtStr);
+    case "greater_than":
+      return Number(sourceValue) > Number(targetValue);
+    case "less_than":
+      return Number(sourceValue) < Number(targetValue);
+    default:
+      return false;
+  }
+};
+
+const isFieldVisible = (fieldId, logicRules, currentFormData) => {
+  if (!logicRules || logicRules.length === 0) return true;
+  
+  const rules = logicRules.filter(r => r.targetFieldId === fieldId);
+  if (rules.length === 0) return true;
+
+  const showRules = rules.filter(r => r.action === "show");
+  const hideRules = rules.filter(r => r.action === "hide");
+
+  let visible = true;
+
+  if (showRules.length > 0) {
+    visible = showRules.some(rule => checkRuleCondition(rule, currentFormData));
+  }
+
+  if (hideRules.length > 0) {
+    const shouldHide = hideRules.some(rule => checkRuleCondition(rule, currentFormData));
+    if (shouldHide) {
+      visible = false;
+    }
+  }
+
+  return visible;
+};
 
 export default function FormBuilder() {
   const { formId } = useParams()
@@ -89,15 +146,33 @@ export default function FormBuilder() {
   const [embedHeight, setEmbedHeight] = useState("600px")
   const [widgetText, setWidgetText] = useState("Feedback")
   const [widgetColor, setWidgetColor] = useState("#9333ea")
+  const [editingRuleId, setEditingRuleId] = useState(null)
+  const [ruleForm, setRuleForm] = useState({
+    fieldId: "",
+    condition: "equals",
+    value: "",
+    action: "show",
+    targetFieldId: "",
+  })
+  const [previewFormData, setPreviewFormData] = useState({})
   const [formSettings, setFormSettings] = useState({
     theme: "modern",
     backgroundColor: "#ffffff",
     textColor: "#1f2937",
+    primaryColor: "#7c3aed",
     submitButtonText: "Submit",
     thankYouMessage: "Thank you for your submission!",
     collectEmail: false,
     allowMultipleSubmissions: true,
+    fontFamily: "Inter",
+    borderRadius: "rounded-xl",
+    shadowStyle: "shadow-md",
+    logicRules: [],
   })
+  
+  // History states for undo/redo
+  const [history, setHistory] = useState([])
+  const [historyPointer, setHistoryPointer] = useState(-1)
 
   const dragItem = useRef(null)
   const dragOverItem = useRef(null)
@@ -142,6 +217,93 @@ export default function FormBuilder() {
     return () => window.removeEventListener("resize", checkScreenSize)
   }, [])
 
+  // Set initial history when form is loaded or created
+  useEffect(() => {
+    if (history.length === 0) {
+      setHistory([fields])
+      setHistoryPointer(0)
+    }
+  }, [fields, history])
+
+  const pushToHistory = (newFields) => {
+    const nextHistory = history.slice(0, historyPointer + 1)
+    setHistory([...nextHistory, newFields])
+    setHistoryPointer(nextHistory.length)
+  }
+
+  const undo = () => {
+    if (historyPointer > 0) {
+      const prevPointer = historyPointer - 1
+      setHistoryPointer(prevPointer)
+      setFields(history[prevPointer])
+    }
+  }
+
+  const redo = () => {
+    if (historyPointer < history.length - 1) {
+      const nextPointer = historyPointer + 1
+      setHistoryPointer(nextPointer)
+      setFields(history[nextPointer])
+    }
+  }
+
+  // Keyboard shortcuts handler
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      // Ignore keyboard shortcuts when user is typing in form inputs, textareas, or selects
+      const activeEl = document.activeElement;
+      const isInput = activeEl && (
+        activeEl.tagName === "INPUT" ||
+        activeEl.tagName === "TEXTAREA" ||
+        activeEl.tagName === "SELECT" ||
+        activeEl.isContentEditable
+      );
+
+      // Save: Ctrl+S or Cmd+S
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") {
+        e.preventDefault();
+        handleSave();
+        return;
+      }
+
+      // Undo: Ctrl+Z or Cmd+Z
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z" && !e.shiftKey) {
+        if (isInput) return; // Allow default undo inside inputs
+        e.preventDefault();
+        undo();
+        return;
+      }
+
+      // Redo: Ctrl+Y or Cmd+Y or Ctrl+Shift+Z
+      if (
+        ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "y") ||
+        ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === "z")
+      ) {
+        if (isInput) return; // Allow default redo inside inputs
+        e.preventDefault();
+        redo();
+        return;
+      }
+
+      // Deselect selected field: Escape
+      if (e.key === "Escape") {
+        setSelectedField(null);
+        return;
+      }
+
+      // Delete selected field: Backspace or Delete
+      if ((e.key === "Delete" || e.key === "Backspace") && selectedField) {
+        if (isInput) return; // Don't delete field when typing inside inputs/textareas
+        e.preventDefault();
+        deleteField(selectedField);
+        return;
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [fields, selectedField, history, historyPointer]);
+
   // Load form data if editing
   useEffect(() => {
     const loadForm = async () => {
@@ -159,17 +321,21 @@ export default function FormBuilder() {
               options: field.options || [],
             })) || [],
           )
-          setFormSettings(
-            form.settings || {
-              theme: "modern",
-              backgroundColor: "#ffffff",
-              textColor: "#1f2937",
-              submitButtonText: "Submit",
-              thankYouMessage: "Thank you for your submission!",
-              collectEmail: false,
-              allowMultipleSubmissions: true,
-            },
-          )
+          setFormSettings({
+            theme: "modern",
+            backgroundColor: "#ffffff",
+            textColor: "#1f2937",
+            primaryColor: "#7c3aed",
+            submitButtonText: "Submit",
+            thankYouMessage: "Thank you for your submission!",
+            collectEmail: false,
+            allowMultipleSubmissions: true,
+            fontFamily: "Inter",
+            borderRadius: "rounded-xl",
+            shadowStyle: "shadow-md",
+            logicRules: [],
+            ...(form.settings || {}),
+          })
         }
       } catch (error) {
         console.error("Error loading form:", error)
@@ -214,7 +380,9 @@ export default function FormBuilder() {
       required: false,
       options: type === "checkbox" || type === "radio" || type === "select" ? ["Option 1", "Option 2"] : [],
     }
-    setFields([...fields, newField])
+    const newFields = [...fields, newField]
+    setFields(newFields)
+    pushToHistory(newFields)
     setSelectedField(newField.id)
 
     // Close mobile panels after adding field
@@ -232,11 +400,15 @@ export default function FormBuilder() {
   }
 
   const updateField = (id, updates) => {
-    setFields(fields.map((field) => (field.id === id ? { ...field, ...updates } : field)))
+    const newFields = fields.map((field) => (field.id === id ? { ...field, ...updates } : field))
+    setFields(newFields)
+    pushToHistory(newFields)
   }
 
   const deleteField = (id) => {
-    setFields(fields.filter((field) => field.id !== id))
+    const newFields = fields.filter((field) => field.id !== id)
+    setFields(newFields)
+    pushToHistory(newFields)
     if (selectedField === id) {
       setSelectedField(null)
     }
@@ -251,6 +423,7 @@ export default function FormBuilder() {
       const newFields = [...fields]
       newFields.splice(index + 1, 0, newField)
       setFields(newFields)
+      pushToHistory(newFields)
     }
     setShowMobileContextMenu(null)
   }
@@ -656,6 +829,7 @@ export default function FormBuilder() {
       newFields.splice(dragItem.current, 1)
       newFields.splice(dragOverItem.current, 0, draggedItem)
       setFields(newFields)
+      pushToHistory(newFields)
     }
     dragItem.current = null
     dragOverItem.current = null
@@ -695,6 +869,7 @@ export default function FormBuilder() {
       newFields.splice(dragItem.current, 1)
       newFields.splice(dragOverItem.current, 0, draggedItem)
       setFields(newFields)
+      pushToHistory(newFields)
     }
 
     // Remove all visual feedback
@@ -739,10 +914,25 @@ export default function FormBuilder() {
     },
   ]
 
+  const handlePreviewInputChange = (fieldId, value) => {
+    setPreviewFormData(prev => ({ ...prev, [fieldId]: value }))
+  }
+
   const renderField = (field, isPreview = false) => {
+    const radiusClass = formSettings.borderRadius || "rounded-lg"
+
+    let themeClasses = "border border-gray-300 bg-white"
+    if (formSettings.theme === "classic") {
+      themeClasses = "border-b-2 border-x-0 border-t-0 border-gray-300 bg-[#fafafa] focus:ring-0 rounded-none"
+    } else if (formSettings.theme === "minimal") {
+      themeClasses = "border border-gray-200 bg-transparent rounded-none focus:ring-0"
+    }
+
     const baseClasses = isPreview
-      ? "w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-      : "w-full p-2 border border-gray-300 rounded focus:ring-1 focus:ring-purple-500 focus:border-transparent text-sm"
+      ? `w-full p-3 transition-all outline-none custom-form-input ${themeClasses} ${formSettings.theme !== "classic" && formSettings.theme !== "minimal" ? radiusClass : ""}`
+      : `w-full p-2 text-sm transition-all outline-none custom-form-input ${themeClasses} ${formSettings.theme !== "classic" && formSettings.theme !== "minimal" ? radiusClass : ""}`
+
+    const value = isPreview ? (previewFormData[field.id] || "") : ""
 
     switch (field.type) {
       case "text":
@@ -756,6 +946,8 @@ export default function FormBuilder() {
             placeholder={field.placeholder || `Enter ${field.label.toLowerCase()}`}
             className={baseClasses}
             disabled={!isPreview}
+            value={value}
+            onChange={isPreview ? (e) => handlePreviewInputChange(field.id, e.target.value) : undefined}
           />
         )
       case "textarea":
@@ -764,23 +956,43 @@ export default function FormBuilder() {
             placeholder={field.placeholder || `Enter ${field.label.toLowerCase()}`}
             className={`${baseClasses} h-24 resize-none`}
             disabled={!isPreview}
+            value={value}
+            onChange={isPreview ? (e) => handlePreviewInputChange(field.id, e.target.value) : undefined}
           />
         )
       case "date":
-        return <input type="date" className={baseClasses} disabled={!isPreview} />
+        return (
+          <input 
+            type="date" 
+            className={baseClasses} 
+            disabled={!isPreview} 
+            value={value}
+            onChange={isPreview ? (e) => handlePreviewInputChange(field.id, e.target.value) : undefined}
+          />
+        )
       case "checkbox":
         return (
           <div className="space-y-2">
-            {field.options?.map((option, index) => (
-              <label key={index} className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
-                  className="rounded border-gray-300 text-purple-600 focus:ring-purple-500"
-                  disabled={!isPreview}
-                />
-                <span className={isPreview ? "text-gray-700" : "text-sm text-gray-600"}>{option}</span>
-              </label>
-            ))}
+            {field.options?.map((option, index) => {
+              const currentValues = Array.isArray(previewFormData[field.id]) ? previewFormData[field.id] : []
+              return (
+                <label key={index} className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    className="rounded border-gray-300 custom-form-checkbox focus:ring-0"
+                    disabled={!isPreview}
+                    checked={isPreview ? currentValues.includes(option) : false}
+                    onChange={isPreview ? (e) => {
+                      const newValues = e.target.checked
+                        ? [...currentValues, option]
+                        : currentValues.filter((v) => v !== option)
+                      handlePreviewInputChange(field.id, newValues)
+                    } : undefined}
+                  />
+                  <span className={isPreview ? "text-gray-700" : "text-sm text-gray-600"}>{option}</span>
+                </label>
+              )
+            })}
           </div>
         )
       case "radio":
@@ -791,8 +1003,10 @@ export default function FormBuilder() {
                 <input
                   type="radio"
                   name={field.id}
-                  className="border-gray-300 text-purple-600 focus:ring-purple-500"
+                  className="border-gray-300 custom-form-radio focus:ring-0"
                   disabled={!isPreview}
+                  checked={isPreview ? value === option : false}
+                  onChange={isPreview ? () => handlePreviewInputChange(field.id, option) : undefined}
                 />
                 <span className={isPreview ? "text-gray-700" : "text-sm text-gray-600"}>{option}</span>
               </label>
@@ -801,8 +1015,13 @@ export default function FormBuilder() {
         )
       case "select":
         return (
-          <select className={baseClasses} disabled={!isPreview}>
-            <option>Choose an option</option>
+          <select 
+            className={baseClasses} 
+            disabled={!isPreview}
+            value={value}
+            onChange={isPreview ? (e) => handlePreviewInputChange(field.id, e.target.value) : undefined}
+          >
+            <option value="">Choose an option</option>
             {field.options?.map((option, index) => (
               <option key={index} value={option}>
                 {option}
@@ -816,7 +1035,10 @@ export default function FormBuilder() {
             {[1, 2, 3, 4, 5].map((star) => (
               <Star
                 key={star}
-                className={`w-6 h-6 text-gray-300 hover:text-yellow-400 cursor-pointer ${isPreview ? "" : "pointer-events-none"}`}
+                className={`w-6 h-6 text-gray-300 hover:text-yellow-400 cursor-pointer ${
+                  isPreview && Number(value) >= star ? "text-yellow-400 fill-yellow-400" : ""
+                } ${isPreview ? "" : "pointer-events-none"}`}
+                onClick={isPreview ? () => handlePreviewInputChange(field.id, star) : undefined}
               />
             ))}
           </div>
@@ -1277,6 +1499,69 @@ export default function FormBuilder() {
           </div>
 
           <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Primary / Accent Color</label>
+            <div className="flex items-center space-x-2">
+              <input
+                type="color"
+                value={formSettings.primaryColor || "#7c3aed"}
+                onChange={(e) => setFormSettings({ ...formSettings, primaryColor: e.target.value })}
+                className="w-10 h-10 border border-gray-300 rounded"
+              />
+              <input
+                type="text"
+                value={formSettings.primaryColor || "#7c3aed"}
+                onChange={(e) => setFormSettings({ ...formSettings, primaryColor: e.target.value })}
+                className="flex-1 p-2 border border-gray-300 rounded"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Font Family</label>
+            <select
+              value={formSettings.fontFamily || "Inter"}
+              onChange={(e) => setFormSettings({ ...formSettings, fontFamily: e.target.value })}
+              className="w-full p-2 border border-gray-300 rounded focus:ring-1 focus:ring-purple-500"
+            >
+              <option value="Inter">Inter (Sans-serif)</option>
+              <option value="Roboto">Roboto (Sans-serif)</option>
+              <option value="Montserrat">Montserrat (Modern Sans)</option>
+              <option value="Playfair Display">Playfair Display (Elegant Serif)</option>
+              <option value="JetBrains Mono">JetBrains Mono (Monospace)</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Corner Roundness</label>
+            <select
+              value={formSettings.borderRadius || "rounded-xl"}
+              onChange={(e) => setFormSettings({ ...formSettings, borderRadius: e.target.value })}
+              className="w-full p-2 border border-gray-300 rounded focus:ring-1 focus:ring-purple-500"
+            >
+              <option value="rounded-none">Sharp Corners (rounded-none)</option>
+              <option value="rounded-md">Subtle (rounded-md)</option>
+              <option value="rounded-lg">Medium (rounded-lg)</option>
+              <option value="rounded-xl">Curved (rounded-xl)</option>
+              <option value="rounded-3xl">Pill-shaped (rounded-3xl)</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Container Shadow</label>
+            <select
+              value={formSettings.shadowStyle || "shadow-md"}
+              onChange={(e) => setFormSettings({ ...formSettings, shadowStyle: e.target.value })}
+              className="w-full p-2 border border-gray-300 rounded focus:ring-1 focus:ring-purple-500"
+            >
+              <option value="shadow-none">Flat (no shadow)</option>
+              <option value="shadow-sm">Subtle (shadow-sm)</option>
+              <option value="shadow-md">Medium (shadow-md)</option>
+              <option value="shadow-lg">Large (shadow-lg)</option>
+              <option value="shadow-xl">Extra Large (shadow-xl)</option>
+            </select>
+          </div>
+
+          <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Submit Button Text</label>
             <input
               type="text"
@@ -1300,47 +1585,254 @@ export default function FormBuilder() {
     </div>
   )
 
+  // Logic rule CRUD handlers
+  const handleAddRule = () => {
+    const sourceFieldId = fields[0]?.id || ""
+    const targetFieldId = fields[1]?.id || fields[0]?.id || ""
+    setRuleForm({
+      fieldId: sourceFieldId,
+      condition: "equals",
+      value: "",
+      action: "show",
+      targetFieldId: targetFieldId,
+    })
+    setEditingRuleId("new")
+  }
+
+  const handleEditRule = (rule) => {
+    setRuleForm({ ...rule })
+    setEditingRuleId(rule.id)
+  }
+
+  const handleDeleteRule = (ruleId) => {
+    const updatedRules = (formSettings.logicRules || []).filter(r => r.id !== ruleId)
+    setFormSettings({ ...formSettings, logicRules: updatedRules })
+  }
+
+  const handleSaveRule = () => {
+    if (!ruleForm.fieldId || !ruleForm.targetFieldId) {
+      alert("Please select both a source field and a target field.")
+      return
+    }
+    if (ruleForm.fieldId === ruleForm.targetFieldId) {
+      alert("Source field and target field cannot be the same.")
+      return
+    }
+
+    const currentRules = formSettings.logicRules || []
+    let updatedRules
+
+    if (editingRuleId === "new") {
+      const newRule = {
+        ...ruleForm,
+        id: Math.random().toString(36).substring(2, 9),
+      }
+      updatedRules = [...currentRules, newRule]
+    } else {
+      updatedRules = currentRules.map(r => r.id === editingRuleId ? { ...ruleForm, id: editingRuleId } : r)
+    }
+
+    setFormSettings({ ...formSettings, logicRules: updatedRules })
+    setEditingRuleId(null)
+  }
+
   // Desktop logic panel
   const renderLogicPanel = () => (
     <div className="bg-white border-l border-gray-200 h-full overflow-y-auto">
       <div className="p-4">
         <h3 className="font-semibold text-gray-900 mb-4">Logic & Rules</h3>
 
-        <div className="space-y-4">
-          <div className="p-4 bg-purple-50 rounded-lg border border-purple-100">
-            <h4 className="text-sm font-medium text-purple-800 mb-2">Coming Soon</h4>
-            <p className="text-sm text-purple-700">
-              Conditional logic will allow you to show or hide fields based on user responses.
-            </p>
-          </div>
+        {editingRuleId !== null ? (
+          <div className="p-4 border border-purple-200 rounded-xl bg-purple-50/30 space-y-4">
+            <h4 className="text-sm font-semibold text-purple-900">
+              {editingRuleId === "new" ? "Create Logic Rule" : "Edit Logic Rule"}
+            </h4>
 
-          <div className="border border-gray-200 rounded-lg p-4">
-            <h4 className="text-sm font-medium text-gray-700 mb-2">Example Logic Rule</h4>
-            <div className="space-y-2 opacity-60">
-              <div className="flex items-center space-x-2">
-                <span className="text-sm">If</span>
-                <select disabled className="text-sm p-1 border border-gray-300 rounded">
-                  <option>Question 1</option>
-                </select>
-                <select disabled className="text-sm p-1 border border-gray-300 rounded">
-                  <option>is equal to</option>
-                </select>
-                <select disabled className="text-sm p-1 border border-gray-300 rounded">
-                  <option>Yes</option>
+            <div className="space-y-3">
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">
+                  If Field
+                </label>
+                <select
+                  value={ruleForm.fieldId}
+                  onChange={(e) => setRuleForm({ ...ruleForm, fieldId: e.target.value })}
+                  className="w-full p-2 border border-gray-300 rounded text-sm focus:ring-purple-500 focus:border-purple-500 bg-white"
+                >
+                  <option value="">Select Field</option>
+                  {fields.map(f => (
+                    <option key={f.id} value={f.id}>{f.label || `Field (${f.type})`}</option>
+                  ))}
                 </select>
               </div>
-              <div className="flex items-center space-x-2">
-                <span className="text-sm">Then</span>
-                <select disabled className="text-sm p-1 border border-gray-300 rounded">
-                  <option>show</option>
+
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">
+                  Condition
+                </label>
+                <select
+                  value={ruleForm.condition}
+                  onChange={(e) => setRuleForm({ ...ruleForm, condition: e.target.value })}
+                  className="w-full p-2 border border-gray-300 rounded text-sm focus:ring-purple-500 focus:border-purple-500 bg-white"
+                >
+                  <option value="equals">is equal to</option>
+                  <option value="not_equals">is not equal to</option>
+                  <option value="contains">contains</option>
+                  <option value="greater_than">is greater than</option>
+                  <option value="less_than">is less than</option>
                 </select>
-                <select disabled className="text-sm p-1 border border-gray-300 rounded">
-                  <option>Question 2</option>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">
+                  Value
+                </label>
+                {(() => {
+                  const selectedF = fields.find(f => f.id === ruleForm.fieldId)
+                  if (selectedF && selectedF.options && selectedF.options.length > 0) {
+                    return (
+                      <select
+                        value={ruleForm.value}
+                        onChange={(e) => setRuleForm({ ...ruleForm, value: e.target.value })}
+                        className="w-full p-2 border border-gray-300 rounded text-sm focus:ring-purple-500 focus:border-purple-500 bg-white"
+                      >
+                        <option value="">Select Option</option>
+                        {selectedF.options.map((opt, idx) => (
+                          <option key={idx} value={opt}>{opt}</option>
+                        ))}
+                      </select>
+                    )
+                  }
+                  return (
+                    <input
+                      type="text"
+                      value={ruleForm.value}
+                      onChange={(e) => setRuleForm({ ...ruleForm, value: e.target.value })}
+                      placeholder="e.g. Yes"
+                      className="w-full p-2 border border-gray-300 rounded text-sm focus:ring-purple-500 focus:border-purple-500 bg-white"
+                    />
+                  )
+                })()}
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">
+                  Action
+                </label>
+                <select
+                  value={ruleForm.action}
+                  onChange={(e) => setRuleForm({ ...ruleForm, action: e.target.value })}
+                  className="w-full p-2 border border-gray-300 rounded text-sm focus:ring-purple-500 focus:border-purple-500 bg-white"
+                >
+                  <option value="show">Show</option>
+                  <option value="hide">Hide</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">
+                  Target Field
+                </label>
+                <select
+                  value={ruleForm.targetFieldId}
+                  onChange={(e) => setRuleForm({ ...ruleForm, targetFieldId: e.target.value })}
+                  className="w-full p-2 border border-gray-300 rounded text-sm focus:ring-purple-500 focus:border-purple-500 bg-white"
+                >
+                  <option value="">Select Target Field</option>
+                  {fields.filter(f => f.id !== ruleForm.fieldId).map(f => (
+                    <option key={f.id} value={f.id}>{f.label || `Field (${f.type})`}</option>
+                  ))}
                 </select>
               </div>
             </div>
+
+            <div className="flex space-x-2 pt-2">
+              <button
+                onClick={handleSaveRule}
+                className="flex-1 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded text-sm font-semibold transition-colors"
+              >
+                Save Rule
+              </button>
+              <button
+                onClick={() => setEditingRuleId(null)}
+                className="flex-1 py-2 border border-gray-300 hover:bg-gray-50 text-gray-700 rounded text-sm font-semibold transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
           </div>
-        </div>
+        ) : (
+          <div className="space-y-4">
+            <button
+              onClick={handleAddRule}
+              className="w-full py-2.5 px-4 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-lg text-sm flex items-center justify-center space-x-2 shadow-sm transition-all"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Add Logic Rule</span>
+            </button>
+
+            {(formSettings.logicRules || []).length === 0 ? (
+              <div className="text-center py-8 px-4 border-2 border-dashed border-gray-200 rounded-xl bg-gray-50/50">
+                <Zap className="w-8 h-8 text-gray-400 mx-auto mb-2 animate-pulse" />
+                <p className="text-sm font-medium text-gray-700">No logic rules yet</p>
+                <p className="text-xs text-gray-500 mt-1 max-w-[200px] mx-auto">
+                  Show or hide fields dynamically based on user responses.
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {(formSettings.logicRules || []).map((rule) => {
+                  const sourceField = fields.find(f => f.id === rule.fieldId)
+                  const targetField = fields.find(f => f.id === rule.targetFieldId)
+
+                  return (
+                    <div key={rule.id} className="p-3 border border-gray-200 rounded-lg hover:border-purple-200 bg-white transition-all shadow-sm">
+                      <div className="flex justify-between items-start mb-2">
+                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-purple-50 text-purple-700 border border-purple-100">
+                          Rule
+                        </span>
+                        <div className="flex space-x-1">
+                          <button
+                            onClick={() => handleEditRule(rule)}
+                            className="p-1 hover:bg-gray-100 rounded text-gray-500 hover:text-gray-700 transition-colors"
+                            title="Edit rule"
+                          >
+                            <Edit2 className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteRule(rule.id)}
+                            className="p-1 hover:bg-red-50 rounded text-red-500 hover:text-red-600 transition-colors"
+                            title="Delete rule"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </div>
+                      <div className="text-xs text-gray-700 space-y-1">
+                        <p>
+                          <span className="font-semibold text-gray-900">IF </span>
+                          <span className="text-purple-600 font-medium">"{sourceField?.label || "Unknown Field"}"</span>
+                        </p>
+                        <p className="text-gray-500">
+                          {rule.condition === "equals" && "is equal to"}
+                          {rule.condition === "not_equals" && "is not equal to"}
+                          {rule.condition === "contains" && "contains"}
+                          {rule.condition === "greater_than" && "is greater than"}
+                          {rule.condition === "less_than" && "is less than"}
+                          <span className="font-semibold text-gray-900 ml-1">"{rule.value}"</span>
+                        </p>
+                        <p>
+                          <span className="font-semibold text-gray-900">THEN </span>
+                          <span className="font-medium text-blue-600">{rule.action.toUpperCase()} </span>
+                          <span className="text-gray-900 font-medium">"{targetField?.label || "Unknown Field"}"</span>
+                        </p>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   )
@@ -1688,6 +2180,79 @@ export default function FormBuilder() {
                     </label>
                   </div>
                 </div>
+
+                <div>
+                  <label className="block text-xs text-gray-500 mb-2">Primary / Accent</label>
+                  <div className="flex items-center space-x-3">
+                    <div
+                      className="w-10 h-10 rounded-full border border-gray-200 flex-shrink-0"
+                      style={{ backgroundColor: formSettings.primaryColor || "#7c3aed" }}
+                    ></div>
+                    <input
+                      type="color"
+                      value={formSettings.primaryColor || "#7c3aed"}
+                      onChange={(e) => setFormSettings({ ...formSettings, primaryColor: e.target.value })}
+                      className="sr-only"
+                      id="primary-color-picker"
+                    />
+                    <label
+                      htmlFor="primary-color-picker"
+                      className="flex-1 p-3 border border-gray-200 rounded-lg text-sm text-gray-700"
+                    >
+                      {formSettings.primaryColor || "#7c3aed"}
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <h4 className="text-sm font-medium text-gray-700 mb-3">Typography & Shape</h4>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-xs text-gray-500 mb-2">Font Family</label>
+                  <select
+                    value={formSettings.fontFamily || "Inter"}
+                    onChange={(e) => setFormSettings({ ...formSettings, fontFamily: e.target.value })}
+                    className="w-full p-3 border border-gray-300 rounded-lg text-sm bg-white"
+                  >
+                    <option value="Inter">Inter (Sans-serif)</option>
+                    <option value="Roboto">Roboto (Sans-serif)</option>
+                    <option value="Montserrat">Montserrat (Modern Sans)</option>
+                    <option value="Playfair Display">Playfair Display (Elegant Serif)</option>
+                    <option value="JetBrains Mono">JetBrains Mono (Monospace)</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs text-gray-500 mb-2">Corner Roundness</label>
+                  <select
+                    value={formSettings.borderRadius || "rounded-xl"}
+                    onChange={(e) => setFormSettings({ ...formSettings, borderRadius: e.target.value })}
+                    className="w-full p-3 border border-gray-300 rounded-lg text-sm bg-white"
+                  >
+                    <option value="rounded-none">Sharp Corners (rounded-none)</option>
+                    <option value="rounded-md">Subtle (rounded-md)</option>
+                    <option value="rounded-lg">Medium (rounded-lg)</option>
+                    <option value="rounded-xl">Curved (rounded-xl)</option>
+                    <option value="rounded-3xl">Pill-shaped (rounded-3xl)</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs text-gray-500 mb-2">Container Shadow</label>
+                  <select
+                    value={formSettings.shadowStyle || "shadow-md"}
+                    onChange={(e) => setFormSettings({ ...formSettings, shadowStyle: e.target.value })}
+                    className="w-full p-3 border border-gray-300 rounded-lg text-sm bg-white"
+                  >
+                    <option value="shadow-none">Flat (no shadow)</option>
+                    <option value="shadow-sm">Subtle (shadow-sm)</option>
+                    <option value="shadow-md">Medium (shadow-md)</option>
+                    <option value="shadow-lg">Large (shadow-lg)</option>
+                    <option value="shadow-xl">Extra Large (shadow-xl)</option>
+                  </select>
+                </div>
               </div>
             </div>
 
@@ -1948,6 +2513,25 @@ export default function FormBuilder() {
                     </button>
                   </div>
 
+                  <div className="flex items-center border border-gray-200 rounded-lg p-0.5 mr-1 bg-gray-50/50">
+                    <button
+                      onClick={undo}
+                      disabled={historyPointer <= 0}
+                      title="Undo (Ctrl+Z)"
+                      className="p-1.5 rounded-md hover:bg-white hover:shadow-sm disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:shadow-none transition-all text-gray-700 cursor-pointer"
+                    >
+                      <Undo className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={redo}
+                      disabled={historyPointer >= history.length - 1}
+                      title="Redo (Ctrl+Y)"
+                      className="p-1.5 rounded-md hover:bg-white hover:shadow-sm disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:shadow-none transition-all text-gray-700 cursor-pointer"
+                    >
+                      <Redo className="w-4 h-4" />
+                    </button>
+                  </div>
+
                   <button
                     className={`px-4 py-2 rounded-lg font-medium transition-all ${
                       showPreview ? "bg-gray-200 text-gray-700" : "bg-purple-100 text-purple-700 hover:bg-purple-200"
@@ -2136,15 +2720,18 @@ export default function FormBuilder() {
                               </button>
                             </div>
                           ) : (
-                            fields.map((field, index) => (
-                              <motion.div
-                                key={field.id}
-                                id={`field-${field.id}`}
-                                className={`field-item relative p-3 border-2 rounded-lg transition-all ${
-                                  selectedField === field.id ? "border-purple-300 bg-purple-50" : "border-gray-200"
-                                }`}
-                                onClick={() => setSelectedField(field.id)}
-                                onTouchStart={() => handleTouchDragStart(index)}
+                            fields.map((field, index) => {
+                              const visible = !showPreview || isFieldVisible(field.id, formSettings.logicRules, previewFormData);
+                              if (!visible) return null;
+                              return (
+                                <motion.div
+                                  key={field.id}
+                                  id={`field-${field.id}`}
+                                  className={`field-item relative p-3 border-2 rounded-lg transition-all ${
+                                    selectedField === field.id ? "border-purple-300 bg-purple-50" : "border-gray-200"
+                                  }`}
+                                  onClick={() => setSelectedField(field.id)}
+                                  onTouchStart={() => handleTouchDragStart(index)}
                                 onTouchMove={(e) => handleTouchDragMove(e, index)}
                                 onTouchEnd={handleTouchDragEnd}
                                 layout
@@ -2159,7 +2746,7 @@ export default function FormBuilder() {
                                   )}
                                 </div>
 
-                                {renderField(field, false)}
+                                {renderField(field, showPreview)}
 
                                 <div className="absolute top-2 right-2 flex space-x-1">
                                   <button
@@ -2183,7 +2770,8 @@ export default function FormBuilder() {
                                   </button>
                                 </div>
                               </motion.div>
-                            ))
+                            )
+                          })
                           )}
                         </div>
                       </div>
@@ -2195,7 +2783,7 @@ export default function FormBuilder() {
               // Desktop Layout
               <div className={`${screenSize === "desktop-sm" ? "p-3 lg:p-6" : "p-4 lg:p-8"} h-full overflow-y-auto`}>
                 <div
-                  className={`mx-auto bg-white rounded-lg shadow-sm border border-gray-200 transition-all duration-300 ${
+                  className={`mx-auto bg-white border border-gray-200 transition-all duration-300 ${formSettings.borderRadius || "rounded-lg"} ${formSettings.shadowStyle || "shadow-sm"} ${
                     previewMode === "mobile"
                       ? "max-w-sm"
                       : previewMode === "tablet"
@@ -2207,8 +2795,26 @@ export default function FormBuilder() {
                   style={{
                     backgroundColor: formSettings.backgroundColor,
                     color: formSettings.textColor,
+                    fontFamily: formSettings.fontFamily || "Inter",
                   }}
                 >
+                  {/* Dynamic Style Tag for Custom Primary Color focus states and fonts */}
+                  <style dangerouslySetInnerHTML={{__html: `
+                    .custom-form-input:focus {
+                      border-color: ${formSettings.primaryColor || '#7c3aed'} !important;
+                      box-shadow: 0 0 0 2px ${(formSettings.primaryColor || '#7c3aed')}33 !important;
+                    }
+                    .custom-form-checkbox:checked {
+                      background-color: ${formSettings.primaryColor || '#7c3aed'} !important;
+                      border-color: ${formSettings.primaryColor || '#7c3aed'} !important;
+                    }
+                    .custom-form-radio:checked {
+                      border-color: ${formSettings.primaryColor || '#7c3aed'} !important;
+                    }
+                    .custom-form-radio:checked::after {
+                      background-color: ${formSettings.primaryColor || '#7c3aed'} !important;
+                    }
+                  `}} />
                   {/* Form Header */}
                   <div className="p-4 lg:p-8">
                     {/* Form Header */}
@@ -2239,71 +2845,75 @@ export default function FormBuilder() {
                           <p className="text-gray-600 mb-4">Add fields from the left panel to get started</p>
                         </div>
                       ) : (
-                        fields.map((field, index) => (
-                          <motion.div
-                            key={field.id}
-                            className={`group relative p-4 border-2 rounded-lg transition-all ${
-                              selectedField === field.id
-                                ? "border-purple-300 bg-purple-50"
-                                : "border-transparent hover:border-gray-200"
-                            }`}
-                            onClick={() => setSelectedField(field.id)}
-                            draggable={!showPreview}
-                            onDragStart={() => handleDragStart(index)}
-                            onDragEnter={() => handleDragEnter(index)}
-                            onDragEnd={handleDragEnd}
-                            layout
-                          >
-                            {!showPreview && (
-                              <div className="absolute -left-2 top-1/2 transform -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <GripVertical className="w-4 h-4 text-gray-400 cursor-move" />
+                        fields.map((field, index) => {
+                          const visible = !showPreview || isFieldVisible(field.id, formSettings.logicRules, previewFormData);
+                          if (!visible) return null;
+                          return (
+                            <motion.div
+                              key={field.id}
+                              className={`group relative p-4 border-2 rounded-lg transition-all ${
+                                selectedField === field.id
+                                  ? "border-purple-300 bg-purple-50"
+                                  : "border-transparent hover:border-gray-200"
+                              }`}
+                              onClick={() => setSelectedField(field.id)}
+                              draggable={!showPreview}
+                              onDragStart={() => handleDragStart(index)}
+                              onDragEnter={() => handleDragEnter(index)}
+                              onDragEnd={handleDragEnd}
+                              layout
+                            >
+                              {!showPreview && (
+                                <div className="absolute -left-2 top-1/2 transform -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                  <GripVertical className="w-4 h-4 text-gray-400 cursor-move" />
+                                </div>
+                              )}
+
+                              <div className="mb-3">
+                                <label className="block text-sm font-medium text-gray-900 mb-1">
+                                  {field.label}
+                                  {field.required && <span className="text-red-500 ml-1">*</span>}
+                                </label>
+                                {field.description && <p className="text-sm text-gray-600 mb-2">{field.description}</p>}
                               </div>
-                            )}
 
-                            <div className="mb-3">
-                              <label className="block text-sm font-medium text-gray-900 mb-1">
-                                {field.label}
-                                {field.required && <span className="text-red-500 ml-1">*</span>}
-                              </label>
-                              {field.description && <p className="text-sm text-gray-600 mb-2">{field.description}</p>}
-                            </div>
+                              {renderField(field, showPreview)}
 
-                            {renderField(field, showPreview)}
-
-                            {!showPreview && selectedField === field.id && (
-                              <div className="absolute top-2 right-2 flex space-x-1">
-                                <button
-                                  className="p-1 bg-white border border-gray-200 rounded hover:bg-gray-50"
-                                  onClick={(e) => {
-                                    e.stopPropagation()
-                                    duplicateField(field.id)
-                                  }}
-                                >
-                                  <Copy className="w-3 h-3 text-gray-600" />
-                                </button>
-                                <button
-                                  className="p-1 bg-white border border-gray-200 rounded hover:bg-red-50 hover:border-red-200"
-                                  onClick={(e) => {
-                                    e.stopPropagation()
-                                    deleteField(field.id)
-                                  }}
-                                >
-                                  <Trash2 className="w-3 h-3 text-red-600" />
-                                </button>
-                              </div>
-                            )}
-                          </motion.div>
-                        ))
+                              {!showPreview && selectedField === field.id && (
+                                <div className="absolute top-2 right-2 flex space-x-1">
+                                  <button
+                                    className="p-1 bg-white border border-gray-200 rounded hover:bg-gray-50"
+                                    onClick={(e) => {
+                                      e.stopPropagation()
+                                      duplicateField(field.id)
+                                    }}
+                                  >
+                                    <Copy className="w-3 h-3 text-gray-600" />
+                                  </button>
+                                  <button
+                                    className="p-1 bg-white border border-gray-200 rounded hover:bg-red-50 hover:border-red-200"
+                                    onClick={(e) => {
+                                      e.stopPropagation()
+                                      deleteField(field.id)
+                                    }}
+                                  >
+                                    <Trash2 className="w-3 h-3 text-red-600" />
+                                  </button>
+                                </div>
+                              )}
+                            </motion.div>
+                          )
+                        })
                       )}
                     </div>
 
                     {showPreview && fields.length > 0 && (
                       <div className="mt-8 pt-6 border-t border-gray-200">
                         <button
-                          className="bg-gradient-to-r from-purple-600 to-blue-600 text-white px-8 py-3 rounded-lg font-semibold hover:shadow-lg transition-all"
+                          className="text-white px-8 py-3 font-semibold hover:shadow-lg transition-all"
                           style={{
-                            backgroundColor:
-                              formSettings.backgroundColor === "#ffffff" ? undefined : formSettings.textColor,
+                            backgroundColor: formSettings.primaryColor || "#7c3aed",
+                            borderRadius: formSettings.borderRadius === "rounded-none" ? "0px" : formSettings.borderRadius === "rounded-md" ? "6px" : formSettings.borderRadius === "rounded-lg" ? "8px" : formSettings.borderRadius === "rounded-xl" ? "12px" : formSettings.borderRadius === "rounded-3xl" ? "24px" : "12px",
                           }}
                         >
                           {formSettings.submitButtonText}

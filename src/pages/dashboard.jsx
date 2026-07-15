@@ -716,19 +716,29 @@ export default function Dashboard() {
 
                 <div className="divide-y divide-gray-200">
                   {sortedForms.length === 0 ? (
-                    <div className="p-6 sm:p-8 text-center">
-                      <FileText className="w-10 h-10 sm:w-12 sm:h-12 text-gray-300 mx-auto mb-4" />
-                      <h3 className="text-lg font-medium text-gray-900 mb-2">No forms found</h3>
-                      <p className="text-gray-600 mb-4 text-sm sm:text-base">
+                    <div className="p-8 sm:p-12 text-center max-w-lg mx-auto bg-gradient-to-br from-white via-purple-50/10 to-blue-50/10 rounded-2xl border border-gray-100 shadow-sm my-6 backdrop-blur-sm transition-all duration-300 hover:shadow-md hover:border-purple-200">
+                      <div className="relative w-20 h-20 mx-auto mb-6 flex items-center justify-center bg-gradient-to-br from-purple-100 to-blue-100 rounded-2xl shadow-inner group">
+                        <FileText className="w-10 h-10 text-purple-600 transition-transform duration-500 group-hover:scale-110 group-hover:rotate-6" />
+                        <span className="absolute -top-1 -right-1 flex h-3 w-3">
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-75"></span>
+                          <span className="relative inline-flex rounded-full h-3 w-3 bg-purple-500"></span>
+                        </span>
+                      </div>
+                      
+                      <h3 className="text-xl font-bold bg-gradient-to-r from-purple-900 to-blue-900 bg-clip-text text-transparent mb-2">
+                        No forms found
+                      </h3>
+                      <p className="text-gray-500 mb-6 text-sm sm:text-base leading-relaxed max-w-sm mx-auto">
                         {forms.length === 0
-                          ? "Create your first form to get started"
-                          : "Try adjusting your search criteria"}
+                          ? "Create your first form to start collecting responses and insights in real-time."
+                          : "We couldn't find any forms matching your search criteria. Try adjusting your filters."}
                       </p>
+                      
                       <button
                         onClick={() => navigate("/builder/new")}
-                        className="bg-gradient-to-r from-purple-600 to-blue-600 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-lg font-semibold hover:shadow-lg transition-all text-sm sm:text-base"
+                        className="inline-flex items-center bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white px-6 py-3 rounded-xl font-semibold hover:shadow-lg hover:shadow-purple-500/20 active:scale-95 transition-all text-sm sm:text-base cursor-pointer"
                       >
-                        <Plus className="w-4 h-4 mr-2 inline" />
+                        <Plus className="w-5 h-5 mr-2" />
                         Create Your First Form
                       </button>
                     </div>

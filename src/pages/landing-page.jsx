@@ -20,6 +20,9 @@ import {
   ChevronDown,
   ChevronUp,
   Send,
+  Plus,
+  Trash2,
+  Settings,
 } from "lucide-react"
 
 // Debounce function
@@ -143,15 +146,23 @@ const HeroSection = () => {
   const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState(0)
 
-  const formPreviews = [
+  // Interactive style state
+  const [formTheme, setFormTheme] = useState("modern") // modern, brutalist, glass
+  const [formColor, setFormColor] = useState("purple") // purple, mint, teal, dark
+  const [formFont, setFormFont] = useState("Inter") // Inter, Space Grotesk, Playfair Display
+  const [formRadius, setFormRadius] = useState("rounded-xl") // rounded-none, rounded-xl, rounded-3xl
+  const [formShadow, setFormShadow] = useState("shadow-lg") // shadow-none, shadow-lg, shadow-brutal
+
+  // Interactive forms state
+  const [interactiveForms, setInteractiveForms] = useState([
     {
       title: "Customer Feedback Survey",
       responses: "1,247",
       completion: "94%",
       fields: [
-        { type: "rating", label: "Overall satisfaction", value: 4 },
-        { type: "text", label: "What did you like most?", placeholder: "Great customer service and fast delivery..." },
-        { type: "select", label: "How did you hear about us?", value: "Social Media" },
+        { id: "f1", type: "rating", label: "Overall satisfaction", value: 4 },
+        { id: "f2", type: "text", label: "What did you like most?", placeholder: "Great customer service and fast delivery..." },
+        { id: "f3", type: "select", label: "How did you hear about us?", value: "Social Media", options: ["Social Media", "Search Engine", "Friend Referral", "Advertisement"] },
       ],
     },
     {
@@ -159,9 +170,9 @@ const HeroSection = () => {
       responses: "856",
       completion: "87%",
       fields: [
-        { type: "text", label: "Full Name", placeholder: "John Smith" },
-        { type: "email", label: "Email Address", placeholder: "john@example.com" },
-        { type: "checkbox", label: "Dietary Restrictions", options: ["Vegetarian", "Vegan", "Gluten-free"] },
+        { id: "f4", type: "text", label: "Full Name", placeholder: "John Smith" },
+        { id: "f5", type: "email", label: "Email Address", placeholder: "john@example.com" },
+        { id: "f6", type: "checkbox", label: "Dietary Restrictions", options: ["Vegetarian", "Vegan", "Gluten-free"], selected: [] },
       ],
     },
     {
@@ -169,15 +180,197 @@ const HeroSection = () => {
       responses: "2,103",
       completion: "91%",
       fields: [
-        { type: "rating", label: "Product Quality", value: 5 },
-        { type: "rating", label: "Value for Money", value: 4 },
-        { type: "textarea", label: "Additional Comments", placeholder: "The product exceeded my expectations..." },
+        { id: "f7", type: "rating", label: "Product Quality", value: 5 },
+        { id: "f8", type: "rating", label: "Value for Money", value: 4 },
+        { id: "f9", type: "textarea", label: "Additional Comments", placeholder: "The product exceeded my expectations..." },
       ],
     },
-  ]
+  ])
+
+  // Field editing state
+  const [editingId, setEditingId] = useState(null) // ID of label or title being edited
+  const [editingText, setEditingText] = useState("")
+
+  // Form input responses
+  const [formResponses, setFormResponses] = useState({})
+  
+  // Submit state
+  const [submittedForms, setSubmittedForms] = useState({ 0: false, 1: false, 2: false })
+
+  // Reset form inputs
+  const resetForm = (tabIndex) => {
+    setFormResponses({})
+    setSubmittedForms(prev => ({ ...prev, [tabIndex]: false }))
+  }
+
+  // Handle label click/double click to edit
+  const startEditing = (id, currentText) => {
+    setEditingId(id)
+    setEditingText(currentText)
+  }
+
+  const saveEditing = (type, fieldId = null) => {
+    if (!editingText.trim()) {
+      setEditingId(null)
+      return
+    }
+
+    setInteractiveForms(prev => {
+      return prev.map((form, index) => {
+        if (index === activeTab) {
+          if (type === "title") {
+            return { ...form, title: editingText }
+          } else if (type === "label" && fieldId) {
+            return {
+              ...form,
+              fields: form.fields.map(field => 
+                field.id === fieldId ? { ...field, label: editingText } : field
+              )
+            }
+          }
+        }
+        return form
+      })
+    })
+    setEditingId(null)
+  }
+
+  // Add custom field to current form
+  const addNewField = (type) => {
+    const newFieldMap = {
+      text: { type: "text", label: "New Short Text", placeholder: "Type your answer here..." },
+      email: { type: "email", label: "New Email", placeholder: "name@example.com" },
+      rating: { type: "rating", label: "Rate us", value: 5 },
+      checkbox: { type: "checkbox", label: "Select options", options: ["Option 1", "Option 2"], selected: [] }
+    }
+
+    const fieldData = newFieldMap[type]
+    if (!fieldData) return
+
+    const newField = {
+      id: `custom_${Date.now()}`,
+      ...fieldData
+    }
+
+    setInteractiveForms(prev => {
+      return prev.map((form, index) => {
+        if (index === activeTab) {
+          return {
+            ...form,
+            fields: [...form.fields, newField]
+          }
+        }
+        return form
+      })
+    })
+  }
+
+  // Delete field from current form
+  const deleteField = (fieldId, e) => {
+    e.stopPropagation()
+    setInteractiveForms(prev => {
+      return prev.map((form, index) => {
+        if (index === activeTab) {
+          return {
+            ...form,
+            fields: form.fields.filter(field => field.id !== fieldId)
+          }
+        }
+        return form
+      })
+    })
+  }
+
+  const handleInputChange = (fieldId, val) => {
+    setFormResponses(prev => ({ ...prev, [fieldId]: val }))
+  }
+
+  const handleSubmit = (e) => {
+    e.preventDefault()
+    setSubmittedForms(prev => ({ ...prev, [activeTab]: true }))
+  }
+
+  // Formatting class lookups based on customization state
+  const fontStyle = {
+    fontFamily: formFont === "Space Grotesk" ? "'Space Grotesk', sans-serif" : 
+                formFont === "Playfair Display" ? "'Playfair Display', serif" : 
+                "'Outfit', 'Inter', sans-serif"
+  }
+
+  const getThemeClasses = () => {
+    const shadowClass = formTheme === "brutalist" ? "shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]" : formShadow
+    
+    // Theme border + shadow styles
+    let themeBorder = "border border-gray-200"
+    if (formTheme === "brutalist") {
+      themeBorder = "border-4 border-black"
+    } else if (formTheme === "glass") {
+      themeBorder = "border border-white/50"
+    }
+
+    // Theme background
+    let themeBg = "bg-white"
+    if (formTheme === "glass") {
+      themeBg = "bg-white/40 backdrop-blur-xl"
+    }
+
+    // Apply color palettes
+    if (formColor === "dark") {
+      themeBg = formTheme === "glass" ? "bg-gray-900/60 backdrop-blur-xl" : "bg-gray-900 text-white"
+      themeBorder = formTheme === "brutalist" ? "border-4 border-white" : "border-gray-800"
+    }
+
+    return `${themeBg} ${themeBorder} ${shadowClass} ${formRadius}`
+  }
+
+  const getInputClasses = () => {
+    let base = "w-full p-3 transition-all outline-none"
+    let border = "border border-gray-300 focus:border-purple-500 focus:ring-2 focus:ring-purple-200"
+    let bg = "bg-gray-50/50"
+
+    if (formTheme === "brutalist") {
+      border = "border-2 border-black focus:bg-yellow-50"
+      bg = "bg-white"
+    } else if (formTheme === "glass") {
+      border = "border border-white/40 focus:border-white/80 focus:bg-white/30"
+      bg = "bg-white/20"
+    }
+
+    if (formColor === "dark") {
+      bg = "bg-gray-800"
+      border = formTheme === "brutalist" ? "border-2 border-white focus:bg-gray-700" : "border-gray-700 focus:border-yellow-400"
+    }
+
+    return `${base} ${border} ${bg} ${formRadius}`
+  }
+
+  const getButtonClasses = () => {
+    let base = "px-6 py-3 font-semibold transition-all flex items-center justify-center cursor-pointer"
+    
+    let colorScheme = "bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white"
+    if (formColor === "mint") {
+      colorScheme = "bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white"
+    } else if (formColor === "teal") {
+      colorScheme = "bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white"
+    } else if (formColor === "dark") {
+      colorScheme = "bg-gradient-to-r from-yellow-400 to-amber-500 hover:from-yellow-500 hover:to-amber-600 text-gray-900"
+    }
+
+    let border = ""
+    if (formTheme === "brutalist") {
+      border = "border-2 border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none"
+      if (formColor === "dark") {
+        border = "border-2 border-white shadow-[3px_3px_0px_0px_rgba(255,255,255,1)] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none"
+      }
+    }
+
+    return `${base} ${colorScheme} ${border} ${formRadius}`
+  }
+
+  const activeForm = interactiveForms[activeTab]
 
   return (
-    <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-100 pt-24">
+    <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-100 pt-24 pb-12">
       <div className="absolute inset-0">
         {[...Array(6)].map((_, i) => (
           <motion.div
@@ -214,14 +407,12 @@ const HeroSection = () => {
               <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
             </motion.button>
 
-            <motion.button
+            <a
+              href="#features"
               className="bg-white/80 backdrop-blur-sm text-gray-700 px-8 py-4 rounded-xl font-semibold text-lg hover:bg-white transition-all flex items-center border border-gray-200"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
             >
-              <Play className="mr-2 w-5 h-5" />
-              Watch Demo
-            </motion.button>
+              Explore Features
+            </a>
           </div>
 
           <motion.div
@@ -251,191 +442,428 @@ const HeroSection = () => {
                     <div className="w-3 h-3 bg-yellow-400 rounded-full"></div>
                     <div className="w-3 h-3 bg-green-400 rounded-full"></div>
                   </div>
-                  <span className="text-white font-medium">FormWise Dashboard</span>
+                  <span className="text-white font-medium flex items-center space-x-2 text-sm sm:text-base">
+                    <span>FormBuilder Sandbox</span>
+                    <span className="bg-purple-500/30 text-purple-200 text-xs px-2 py-0.5 rounded font-mono border border-purple-500/20">PLAYGROUND</span>
+                  </span>
                 </div>
-                <div className="text-gray-400 text-sm">formwise.app</div>
+                <div className="text-gray-400 text-sm hidden sm:block">sandbox.formwise.app</div>
               </div>
             </div>
 
             {/* Dashboard Content */}
-            <div className="p-6 bg-gray-50">
-              {/* Stats Cards */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                <motion.div
-                  className="bg-white rounded-xl p-4 shadow-sm border border-gray-200"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.8 }}
-                >
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-gray-600">Total Responses</p>
-                      <p className="text-2xl font-bold text-gray-900">4,206</p>
-                    </div>
-                    <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-                      <BarChart3 className="w-5 h-5 text-green-600" />
-                    </div>
-                  </div>
-                </motion.div>
-
-                <motion.div
-                  className="bg-white rounded-xl p-4 shadow-sm border border-gray-200"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.9 }}
-                >
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-gray-600">Completion Rate</p>
-                      <p className="text-2xl font-bold text-gray-900">91%</p>
-                    </div>
-                    <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                      <Users className="w-5 h-5 text-blue-600" />
-                    </div>
-                  </div>
-                </motion.div>
-
-                <motion.div
-                  className="bg-white rounded-xl p-4 shadow-sm border border-gray-200"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 1.0 }}
-                >
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-gray-600">Active Forms</p>
-                      <p className="text-2xl font-bold text-gray-900">12</p>
-                    </div>
-                    <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
-                      <Zap className="w-5 h-5 text-purple-600" />
-                    </div>
-                  </div>
-                </motion.div>
+            <div className="p-4 sm:p-6 bg-gray-50 text-left">
+              {/* Form Preview Tabs */}
+              <div className="flex justify-between items-center border-b border-gray-200 mb-6 flex-wrap gap-2">
+                <div className="flex space-x-1 overflow-x-auto">
+                  {interactiveForms.map((form, index) => (
+                    <button
+                      key={index}
+                      onClick={() => {
+                        setActiveTab(index)
+                        setFormResponses({})
+                      }}
+                      className={`px-4 sm:px-6 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
+                        activeTab === index
+                          ? "border-purple-600 text-purple-600 bg-purple-50"
+                          : "border-transparent text-gray-500 hover:text-gray-700"
+                      }`}
+                    >
+                      {form.title}
+                    </button>
+                  ))}
+                </div>
+                <div className="text-xs text-gray-500 flex items-center space-x-2 bg-purple-100/50 text-purple-700 px-3 py-1 rounded-full border border-purple-200/50">
+                  <span className="relative flex h-2.5 w-2.5">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-purple-500"></span>
+                  </span>
+                  <span>Try editing fields and styling live!</span>
+                </div>
               </div>
 
-              {/* Form Preview Tabs */}
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                <div className="border-b border-gray-200">
-                  <div className="flex space-x-0">
-                    {formPreviews.map((form, index) => (
+              {/* Two Column Playground */}
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+                
+                {/* Style Customizer Sidebar (1/3 width) */}
+                <div className="bg-white rounded-2xl border border-gray-200 p-5 space-y-5 shadow-sm">
+                  <div className="flex items-center space-x-2 pb-3 border-b border-gray-100">
+                    <Settings className="w-5 h-5 text-purple-600" />
+                    <h3 className="font-semibold text-gray-900 text-base">Form Customizer</h3>
+                  </div>
+
+                  {/* Theme Select */}
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+                      Layout Theme
+                    </label>
+                    <div className="grid grid-cols-3 gap-1.5">
+                      {[
+                        { id: "modern", label: "Modern" },
+                        { id: "brutalist", label: "Brutalist" },
+                        { id: "glass", label: "Glassy" }
+                      ].map(t => (
+                        <button
+                          key={t.id}
+                          onClick={() => setFormTheme(t.id)}
+                          className={`py-1.5 px-2 text-xs font-medium border rounded-lg transition-all ${
+                            formTheme === t.id 
+                              ? "bg-purple-50 border-purple-500 text-purple-700" 
+                              : "border-gray-200 hover:bg-gray-50 text-gray-600"
+                          }`}
+                        >
+                          {t.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Color Preset Select */}
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+                      Color Palette
+                    </label>
+                    <div className="grid grid-cols-2 gap-1.5">
+                      {[
+                        { id: "purple", label: "Soft Indigo" },
+                        { id: "mint", label: "Emerald Mint" },
+                        { id: "teal", label: "Ocean Teal" },
+                        { id: "dark", label: "Midnight Neon" }
+                      ].map(c => (
+                        <button
+                          key={c.id}
+                          onClick={() => setFormColor(c.id)}
+                          className={`py-1.5 px-2 text-xs font-medium border rounded-lg transition-all ${
+                            formColor === c.id 
+                              ? "bg-purple-50 border-purple-500 text-purple-700 font-semibold" 
+                              : "border-gray-200 hover:bg-gray-50 text-gray-600"
+                          }`}
+                        >
+                          {c.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Font Select */}
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+                      Typography Font
+                    </label>
+                    <select
+                      value={formFont}
+                      onChange={(e) => setFormFont(e.target.value)}
+                      className="w-full text-xs p-2 border border-gray-200 rounded-lg outline-none focus:ring-1 focus:ring-purple-500 bg-white"
+                    >
+                      <option value="Inter">Outfit (Sleek Sans)</option>
+                      <option value="Space Grotesk">Space Grotesk (Modern Tech)</option>
+                      <option value="Playfair Display">Playfair Display (Elegant Serif)</option>
+                    </select>
+                  </div>
+
+                  {/* Border Radius */}
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+                      Corner Roundness
+                    </label>
+                    <div className="grid grid-cols-3 gap-1.5">
+                      {[
+                        { id: "rounded-none", label: "Sharp" },
+                        { id: "rounded-xl", label: "Rounded" },
+                        { id: "rounded-3xl", label: "Soft" }
+                      ].map(r => (
+                        <button
+                          key={r.id}
+                          onClick={() => setFormRadius(r.id)}
+                          className={`py-1 px-2 text-xs font-medium border rounded-lg transition-all ${
+                            formRadius === r.id 
+                              ? "bg-purple-50 border-purple-500 text-purple-700" 
+                              : "border-gray-200 hover:bg-gray-50 text-gray-600"
+                          }`}
+                        >
+                          {r.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Add Field Section */}
+                  <div className="pt-4 border-t border-gray-100">
+                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+                      Sandbox: Add Field to Form
+                    </label>
+                    <div className="grid grid-cols-2 gap-1.5">
                       <button
-                        key={index}
-                        onClick={() => setActiveTab(index)}
-                        className={`px-6 py-4 text-sm font-medium border-b-2 transition-colors ${
-                          activeTab === index
-                            ? "border-purple-600 text-purple-600 bg-purple-50"
-                            : "border-transparent text-gray-500 hover:text-gray-700"
-                        }`}
+                        onClick={() => addNewField("text")}
+                        className="py-1.5 px-2 bg-gray-50 border border-gray-200 rounded-lg text-xs font-medium hover:bg-purple-50 hover:text-purple-600 hover:border-purple-300 transition-all flex items-center justify-center space-x-1"
                       >
-                        {form.title}
+                        <Plus className="w-3.5 h-3.5" />
+                        <span>Short Text</span>
                       </button>
-                    ))}
+                      <button
+                        onClick={() => addNewField("email")}
+                        className="py-1.5 px-2 bg-gray-50 border border-gray-200 rounded-lg text-xs font-medium hover:bg-purple-50 hover:text-purple-600 hover:border-purple-300 transition-all flex items-center justify-center space-x-1"
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                        <span>Email</span>
+                      </button>
+                      <button
+                        onClick={() => addNewField("rating")}
+                        className="py-1.5 px-2 bg-gray-50 border border-gray-200 rounded-lg text-xs font-medium hover:bg-purple-50 hover:text-purple-600 hover:border-purple-300 transition-all flex items-center justify-center space-x-1"
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                        <span>Rating Stars</span>
+                      </button>
+                      <button
+                        onClick={() => addNewField("checkbox")}
+                        className="py-1.5 px-2 bg-gray-50 border border-gray-200 rounded-lg text-xs font-medium hover:bg-purple-50 hover:text-purple-600 hover:border-purple-300 transition-all flex items-center justify-center space-x-1"
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                        <span>Checkbox</span>
+                      </button>
+                    </div>
+                  </div>
+                  
+                  <div className="bg-purple-50 rounded-xl p-3 border border-purple-100">
+                    <p className="text-xs text-purple-700 leading-relaxed">
+                      💡 **Tip:** Double-click form title or field labels on the right canvas to live edit their text!
+                    </p>
                   </div>
                 </div>
 
-                <AnimatePresence mode="wait">
-                  <motion.div
-                    key={activeTab}
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -20 }}
-                    transition={{ duration: 0.3 }}
-                    className="p-6"
-                  >
-                    <div className="flex items-center justify-between mb-6">
-                      <div>
-                        <h3 className="text-lg font-semibold text-gray-900">{formPreviews[activeTab].title}</h3>
-                        <div className="flex items-center space-x-4 mt-1 text-sm text-gray-500">
-                          <span>{formPreviews[activeTab].responses} responses</span>
-                          <span>•</span>
-                          <span>{formPreviews[activeTab].completion} completion rate</span>
-                        </div>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-                        <span className="text-sm text-gray-600">Live</span>
-                      </div>
-                    </div>
-
-                    <div className="space-y-4">
-                      {formPreviews[activeTab].fields.map((field, fieldIndex) => (
-                        <motion.div
-                          key={fieldIndex}
-                          className="space-y-2"
-                          initial={{ opacity: 0, y: 10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: fieldIndex * 0.1 }}
-                        >
-                          <label className="block text-sm font-medium text-gray-700">{field.label}</label>
-
-                          {field.type === "rating" && (
-                            <div className="flex space-x-1">
-                              {[1, 2, 3, 4, 5].map((star) => (
-                                <Star
-                                  key={star}
-                                  className={`w-6 h-6 ${
-                                    star <= field.value ? "text-yellow-400 fill-current" : "text-gray-300"
-                                  }`}
-                                />
-                              ))}
-                            </div>
-                          )}
-
-                          {field.type === "text" && (
-                            <div className="bg-gray-50 border border-gray-300 rounded-lg p-3 text-gray-600">
-                              {field.placeholder}
-                            </div>
-                          )}
-
-                          {field.type === "email" && (
-                            <div className="bg-gray-50 border border-gray-300 rounded-lg p-3 text-gray-600">
-                              {field.placeholder}
-                            </div>
-                          )}
-
-                          {field.type === "textarea" && (
-                            <div className="bg-gray-50 border border-gray-300 rounded-lg p-3 h-20 text-gray-600">
-                              {field.placeholder}
-                            </div>
-                          )}
-
-                          {field.type === "select" && (
-                            <div className="bg-gray-50 border border-gray-300 rounded-lg p-3 text-gray-600">
-                              {field.value}
-                            </div>
-                          )}
-
-                          {field.type === "checkbox" && (
-                            <div className="space-y-2">
-                              {field.options.map((option, optionIndex) => (
-                                <div key={optionIndex} className="flex items-center space-x-2">
-                                  <div
-                                    className={`w-4 h-4 rounded border-2 ${optionIndex === 0 ? "bg-purple-600 border-purple-600" : "border-gray-300"}`}
-                                  >
-                                    {optionIndex === 0 && <Check className="w-3 h-3 text-white" />}
-                                  </div>
-                                  <span className="text-sm text-gray-700">{option}</span>
-                                </div>
-                              ))}
-                            </div>
-                          )}
-                        </motion.div>
-                      ))}
-                    </div>
-
-                    <div className="mt-6 pt-4 border-t border-gray-200">
-                      <motion.button
-                        className="bg-gradient-to-r from-purple-600 to-blue-600 text-white px-6 py-3 rounded-lg font-medium flex items-center"
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
+                {/* Form Canvas Area (2/3 width) */}
+                <div className="lg:col-span-2 flex flex-col items-center justify-center w-full min-h-[400px]">
+                  
+                  <AnimatePresence mode="wait">
+                    {submittedForms[activeTab] ? (
+                      <motion.div
+                        key="success"
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0 }}
+                        className={`w-full max-w-lg p-8 text-center bg-white border border-gray-200 shadow-xl rounded-2xl flex flex-col items-center justify-center`}
+                        style={fontStyle}
                       >
-                        <Send className="w-4 h-4 mr-2" />
-                        Submit Response
-                      </motion.button>
-                    </div>
-                  </motion.div>
-                </AnimatePresence>
+                        <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                          <Check className="w-8 h-8 text-green-600 stroke-[3px]" />
+                        </div>
+                        <h3 className="text-2xl font-bold text-gray-900 mb-2">Form Submitted!</h3>
+                        <p className="text-gray-600 mb-6">
+                          Your response has been saved to our simulated sandbox. Ready to build a real form?
+                        </p>
+                        <div className="flex space-x-3">
+                          <button
+                            onClick={() => resetForm(activeTab)}
+                            className="px-4 py-2 border border-gray-200 rounded-lg text-sm text-gray-700 hover:bg-gray-50"
+                          >
+                            Submit Again
+                          </button>
+                          <button
+                            onClick={() => navigate("/auth")}
+                            className="px-5 py-2 bg-purple-600 text-white rounded-lg text-sm font-semibold hover:bg-purple-700"
+                          >
+                            Create Free Account
+                          </button>
+                        </div>
+                      </motion.div>
+                    ) : (
+                      <motion.form
+                        key="form"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        onSubmit={handleSubmit}
+                        style={fontStyle}
+                        className={`w-full max-w-lg p-6 sm:p-8 transition-all duration-300 ${getThemeClasses()}`}
+                      >
+                        {/* Title block */}
+                        <div className="mb-6 pb-4 border-b border-gray-200/50">
+                          {editingId === "title" ? (
+                            <input
+                              type="text"
+                              value={editingText}
+                              onChange={(e) => setEditingText(e.target.value)}
+                              onBlur={() => saveEditing("title")}
+                              onKeyDown={(e) => e.key === "Enter" && saveEditing("title")}
+                              className="text-xl sm:text-2xl font-bold border-b border-purple-500 outline-none w-full bg-transparent focus:ring-1 focus:ring-purple-200"
+                              autoFocus
+                            />
+                          ) : (
+                            <h3 
+                              className="text-xl sm:text-2xl font-bold cursor-pointer hover:bg-purple-50 hover:text-purple-700 px-1 py-0.5 rounded transition-all truncate"
+                              title="Double-click to edit title"
+                              onDoubleClick={() => startEditing("title", activeForm.title)}
+                            >
+                              {activeForm.title}
+                            </h3>
+                          )}
+                          <div className="flex items-center space-x-4 mt-2 text-xs text-gray-500">
+                            <span>{activeForm.responses} responses</span>
+                            <span>•</span>
+                            <span>{activeForm.completion} completion rate</span>
+                          </div>
+                        </div>
+
+                        {/* Fields List */}
+                        <div className="space-y-5 mb-8">
+                          {activeForm.fields.map((field, fieldIndex) => {
+                            const val = formResponses[field.id] || ""
+                            return (
+                              <motion.div
+                                key={field.id}
+                                className="space-y-1.5 relative group"
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: fieldIndex * 0.05 }}
+                              >
+                                {/* Label block */}
+                                <div className="flex justify-between items-center">
+                                  {editingId === field.id ? (
+                                    <input
+                                      type="text"
+                                      value={editingText}
+                                      onChange={(e) => setEditingText(e.target.value)}
+                                      onBlur={() => saveEditing("label", field.id)}
+                                      onKeyDown={(e) => e.key === "Enter" && saveEditing("label", field.id)}
+                                      className="text-sm font-semibold border-b border-purple-500 outline-none w-full bg-transparent"
+                                      autoFocus
+                                    />
+                                  ) : (
+                                    <label
+                                      className="text-sm font-semibold cursor-pointer hover:bg-purple-50 hover:text-purple-700 px-1 py-0.5 rounded transition-all flex-1 mr-2"
+                                      title="Double-click to edit label"
+                                      onDoubleClick={() => startEditing(field.id, field.label)}
+                                    >
+                                      {field.label}
+                                    </label>
+                                  )}
+
+                                  {/* Delete Field button in sandbox */}
+                                  <button
+                                    type="button"
+                                    onClick={(e) => deleteField(field.id, e)}
+                                    className="opacity-0 group-hover:opacity-100 p-1 text-red-500 hover:bg-red-50 rounded transition-all cursor-pointer"
+                                    title="Delete field"
+                                  >
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                  </button>
+                                </div>
+
+                                {/* Render Inputs */}
+                                {field.type === "rating" && (
+                                  <div className="flex space-x-1">
+                                    {[1, 2, 3, 4, 5].map((star) => (
+                                      <button
+                                        type="button"
+                                        key={star}
+                                        onClick={() => handleInputChange(field.id, star)}
+                                        className="transition-transform active:scale-95 cursor-pointer"
+                                      >
+                                        <Star
+                                          className={`w-7 h-7 transition-colors ${
+                                            star <= (val || field.value) ? "text-yellow-400 fill-current" : "text-gray-300 hover:text-yellow-200"
+                                          }`}
+                                        />
+                                      </button>
+                                    ))}
+                                  </div>
+                                )}
+
+                                {field.type === "text" && (
+                                  <input
+                                    type="text"
+                                    value={val}
+                                    onChange={(e) => handleInputChange(field.id, e.target.value)}
+                                    placeholder={field.placeholder}
+                                    className={getInputClasses()}
+                                  />
+                                )}
+
+                                {field.type === "email" && (
+                                  <input
+                                    type="email"
+                                    value={val}
+                                    onChange={(e) => handleInputChange(field.id, e.target.value)}
+                                    placeholder={field.placeholder}
+                                    className={getInputClasses()}
+                                  />
+                                )}
+
+                                {field.type === "textarea" && (
+                                  <textarea
+                                    value={val}
+                                    onChange={(e) => handleInputChange(field.id, e.target.value)}
+                                    placeholder={field.placeholder}
+                                    className={`${getInputClasses()} h-20 resize-none`}
+                                  />
+                                )}
+
+                                {field.type === "select" && (
+                                  <select
+                                    value={val || field.value}
+                                    onChange={(e) => handleInputChange(field.id, e.target.value)}
+                                    className={getInputClasses()}
+                                  >
+                                    {field.options.map((opt, i) => (
+                                      <option key={i} value={opt} className="text-gray-900 bg-white">
+                                        {opt}
+                                      </option>
+                                    ))}
+                                  </select>
+                                )}
+
+                                {field.type === "checkbox" && (
+                                  <div className="space-y-2 pt-1">
+                                    {field.options.map((option, optIdx) => {
+                                      const currentList = val || []
+                                      const checked = currentList.includes(option)
+                                      return (
+                                        <label key={optIdx} className="flex items-center space-x-2 cursor-pointer">
+                                          <input
+                                            type="checkbox"
+                                            checked={checked}
+                                            onChange={(e) => {
+                                              const newList = e.target.checked
+                                                ? [...currentList, option]
+                                                : currentList.filter(o => o !== option)
+                                              handleInputChange(field.id, newList)
+                                            }}
+                                            className="rounded border-gray-300 text-purple-600 focus:ring-purple-500 cursor-pointer"
+                                          />
+                                          <span className="text-sm text-gray-600">{option}</span>
+                                        </label>
+                                      )
+                                    })}
+                                  </div>
+                                )}
+                              </motion.div>
+                            )
+                          })}
+                        </div>
+
+                        {/* Submit Button */}
+                        <div className="pt-4 border-t border-gray-200/50 flex justify-between items-center">
+                          <button type="submit" className={getButtonClasses()}>
+                            <Send className="w-4 h-4 mr-2" />
+                            <span>Submit Response</span>
+                          </button>
+                          
+                          <button
+                            type="button"
+                            onClick={() => resetForm(activeTab)}
+                            className="text-xs text-gray-500 hover:text-gray-700 underline"
+                          >
+                            Reset Form
+                          </button>
+                        </div>
+                      </motion.form>
+                    )}
+                  </AnimatePresence>
+
+                </div>
+
               </div>
+
             </div>
           </div>
         </motion.div>
@@ -1028,6 +1456,7 @@ export default function LandingPage() {
         <meta property="og:url" content="https://formwise.pages.dev/" />
         <meta property="og:image" content="/formwise-preview.png" />
         <link rel="canonical" href="https://formwise.pages.dev/" />
+        <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet" />
 
         <script type="application/ld+json">
           {`
