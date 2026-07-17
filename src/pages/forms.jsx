@@ -28,6 +28,12 @@ import {
   Square,
   ArrowDown,
   ArrowUp,
+  Link,
+  Code,
+  MessageSquare,
+  QrCode,
+  Check,
+  ExternalLink,
 } from "lucide-react"
 import Sidebar from "../components/sidebar"
 import MobileNavigation from "../components/mobile-navigation"
@@ -39,6 +45,13 @@ import { useAuth } from "../hooks/use-auth"
 export default function Forms() {
   const { user } = useAuth()
   const { forms, loading: formsLoading, deleteForm, duplicateForm } = useForms()
+  const [sharingFormId, setSharingFormId] = useState(null)
+  const [shareTab, setShareTab] = useState("link")
+  const [embedWidth, setEmbedWidth] = useState("100%")
+  const [embedHeight, setEmbedHeight] = useState("600px")
+  const [widgetText, setWidgetText] = useState("Feedback")
+  const [widgetColor, setWidgetColor] = useState("#7c3aed")
+  const [copied, setCopied] = useState(false)
   const [searchTerm, setSearchTerm] = useState("")
   const [isMobile, setIsMobile] = useState(false)
   const [showMobileActions, setShowMobileActions] = useState(null)
@@ -178,34 +191,360 @@ export default function Forms() {
       event.stopPropagation()
     }
 
-    const shareableLink = `${window.location.origin}/form/${formId}`
+    setSharingFormId(formId)
+    setShareTab("link")
+    setCopied(false)
 
-    try {
-      // Copy the link to the clipboard
-      await navigator.clipboard.writeText(shareableLink)
-
-      // Log activity
-      if (user) {
-        try {
-          await updateDoc(doc(db, "userActivity", user.uid), {
-            activities: arrayUnion({
-              type: "share",
-              formId,
-              timestamp: Timestamp.now(),
-            }),
-          })
-        } catch (error) {
-          console.error("Error logging activity:", error)
-        }
+    // Log activity
+    if (user) {
+      try {
+        await updateDoc(doc(db, "userActivity", user.uid), {
+          activities: arrayUnion({
+            type: "share",
+            formId,
+            timestamp: Timestamp.now(),
+          }),
+        })
+      } catch (error) {
+        console.error("Error logging activity:", error)
       }
-
-      alert("Link copied to clipboard!")
-    } catch (error) {
-      console.error("Error copying link: ", error)
-      alert("Failed to copy link. Please try again.")
     }
 
     setShowMobileActions(null)
+  }
+
+  const handleCopy = (text) => {
+    navigator.clipboard.writeText(text)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
+
+  const renderShareModal = () => {
+    if (!sharingFormId) return null
+    const formUrl = `${window.location.origin}/form/${sharingFormId}`
+    const embedUrl = `${formUrl}?embed=true`
+    const iframeCode = `<iframe src="${embedUrl}" width="${embedWidth}" height="${embedHeight}" frameborder="0" style="border: 1px solid #e5e7eb; border-radius: 8px;"></iframe>`
+    
+    const widgetCode = `<!-- Place this button where you want it to appear -->
+<button onclick="openFormWiseModal()" style="background-color: ${widgetColor}; color: white; padding: 12px 24px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; font-family: sans-serif; transition: opacity 0.2s;">
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+  \${widgetText}
+</button>
+
+<script>
+  function openFormWiseModal() {
+    const width = 600;
+    const height = 700;
+    const left = (screen.width/2)-(width/2);
+    const top = (screen.height/2)-(height/2);
+    window.open(
+      '${formUrl}',
+      'FormWisePopup',
+      'width='+width+',height='+height+',top='+top+',left='+left+',resizable=yes,scrollbars=yes'
+    );
+  }
+</script>`
+
+    return (
+      <motion.div
+        className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        onClick={() => setSharingFormId(null)}
+      >
+        <motion.div
+          className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col border border-gray-100"
+          initial={{ scale: 0.95, opacity: 0, y: 20 }}
+          animate={{ scale: 1, opacity: 1, y: 0 }}
+          exit={{ scale: 0.95, opacity: 0, y: 20 }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          {/* Header */}
+          <div className="p-6 border-b border-gray-100 flex items-center justify-between bg-gradient-to-r from-purple-50/50 to-blue-50/50">
+            <div>
+              <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                <span>Share & Embed Form</span>
+                <span className="text-2xl">🔗</span>
+              </h2>
+              <p className="text-sm text-gray-500 mt-1">Choose how you want to share or embed this form on your website.</p>
+            </div>
+            <button
+              onClick={() => setSharingFormId(null)}
+              className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-400 hover:text-gray-600 transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+
+          {/* Tabs */}
+          <div className="flex border-b border-gray-100 bg-gray-50/50">
+            <button
+              onClick={() => { setShareTab("link"); setCopied(false); }}
+              className={`flex-1 py-4 px-6 text-sm font-medium border-b-2 transition-all flex items-center justify-center gap-2 ${
+                shareTab === "link"
+                  ? "border-purple-600 text-purple-600 bg-white"
+                  : "border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50/30"
+              }`}
+            >
+              <Link className="w-4 h-4" />
+              <span>Direct Link</span>
+            </button>
+            <button
+              onClick={() => { setShareTab("embed"); setCopied(false); }}
+              className={`flex-1 py-4 px-6 text-sm font-medium border-b-2 transition-all flex items-center justify-center gap-2 ${
+                shareTab === "embed"
+                  ? "border-purple-600 text-purple-600 bg-white"
+                  : "border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50/30"
+              }`}
+            >
+              <Code className="w-4 h-4" />
+              <span>Iframe Embed</span>
+            </button>
+            <button
+              onClick={() => { setShareTab("widget"); setCopied(false); }}
+              className={`flex-1 py-4 px-6 text-sm font-medium border-b-2 transition-all flex items-center justify-center gap-2 ${
+                shareTab === "widget"
+                  ? "border-purple-600 text-purple-600 bg-white"
+                  : "border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50/30"
+              }`}
+            >
+              <MessageSquare className="w-4 h-4" />
+              <span>Popup Widget</span>
+            </button>
+          </div>
+
+          {/* Content */}
+          <div className="p-6 overflow-y-auto max-h-[60vh]">
+            {shareTab === "link" && (
+              <div className="space-y-6">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Public Form URL</label>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      readOnly
+                      value={formUrl}
+                      className="flex-1 p-3 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-600 font-mono focus:outline-none"
+                    />
+                    <button
+                      onClick={() => handleCopy(formUrl)}
+                      className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2.5 rounded-lg text-sm font-semibold flex items-center gap-1.5 transition-colors shadow-sm"
+                    >
+                      {copied ? (
+                        <>
+                          <Check className="w-4 h-4" />
+                          <span>Copied</span>
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="w-4 h-4" />
+                          <span>Copy Link</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="flex gap-4">
+                  <a
+                    href={formUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex-1 bg-white hover:bg-gray-50 border border-gray-200 text-gray-700 py-3 rounded-lg text-sm font-semibold flex items-center justify-center gap-2 transition-colors shadow-xs"
+                  >
+                    <ExternalLink className="w-4 h-4" />
+                    <span>View Live Form</span>
+                  </a>
+                </div>
+
+                {/* Social Share */}
+                <div className="border-t border-gray-100 pt-6">
+                  <h4 className="text-sm font-semibold text-gray-700 mb-3">Share on Social Media</h4>
+                  <div className="flex gap-3">
+                    <a
+                      href={`https://twitter.com/intent/tweet?text=Please%20fill%20out%20my%20form%20built%20with%20FormWise!&url=${encodeURIComponent(formUrl)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex-1 py-2 px-3 border border-gray-200 hover:border-gray-300 rounded-lg text-sm font-medium text-gray-600 hover:text-gray-800 flex items-center justify-center gap-2 transition-colors bg-gray-50 hover:bg-gray-100/50"
+                    >
+                      Twitter / X
+                    </a>
+                    <a
+                      href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(formUrl)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex-1 py-2 px-3 border border-gray-200 hover:border-gray-300 rounded-lg text-sm font-medium text-gray-600 hover:text-gray-800 flex items-center justify-center gap-2 transition-colors bg-gray-50 hover:bg-gray-100/50"
+                    >
+                      LinkedIn
+                    </a>
+                    <a
+                      href={`mailto:?subject=Please%20fill%20out%20my%20form&body=Here%20is%20the%20link%20to%20my%20FormWise%20form:%20${encodeURIComponent(formUrl)}`}
+                      className="flex-1 py-2 px-3 border border-gray-200 hover:border-gray-300 rounded-lg text-sm font-medium text-gray-600 hover:text-gray-800 flex items-center justify-center gap-2 transition-colors bg-gray-50 hover:bg-gray-100/50"
+                    >
+                      Email
+                    </a>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {shareTab === "embed" && (
+              <div className="space-y-6">
+                {/* Embed customization controls */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">Width</label>
+                    <input
+                      type="text"
+                      value={embedWidth}
+                      onChange={(e) => setEmbedWidth(e.target.value)}
+                      placeholder="e.g. 100% or 600px"
+                      className="w-full p-2.5 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">Height</label>
+                    <input
+                      type="text"
+                      value={embedHeight}
+                      onChange={(e) => setEmbedHeight(e.target.value)}
+                      placeholder="e.g. 600px"
+                      className="w-full p-2.5 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="block text-sm font-semibold text-gray-700">Iframe Code</label>
+                    <button
+                      onClick={() => handleCopy(iframeCode)}
+                      className="text-purple-600 hover:text-purple-700 text-xs font-semibold flex items-center gap-1 transition-colors"
+                    >
+                      {copied ? (
+                        <>
+                          <Check className="w-3.5 h-3.5" />
+                          <span>Copied Code</span>
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="w-3.5 h-3.5" />
+                          <span>Copy Code</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                  <textarea
+                    readOnly
+                    value={iframeCode}
+                    rows={4}
+                    className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg text-xs text-gray-600 font-mono focus:outline-none resize-none"
+                  />
+                </div>
+
+                <div className="bg-purple-50 rounded-xl p-4 border border-purple-100 flex items-start gap-3">
+                  <QrCode className="w-5 h-5 text-purple-600 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <h5 className="text-sm font-bold text-purple-900">Embedding Tip</h5>
+                    <p className="text-xs text-purple-700 mt-1 leading-relaxed">
+                      Simply paste this code block directly into your CMS (WordPress, Webflow, Shopify) or website's custom HTML component.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {shareTab === "widget" && (
+              <div className="space-y-6">
+                {/* Widget customization controls */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">Button Text</label>
+                    <input
+                      type="text"
+                      value={widgetText}
+                      onChange={(e) => setWidgetText(e.target.value)}
+                      placeholder="e.g. Feedback"
+                      className="w-full p-2.5 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">Button Color</label>
+                    <div className="flex gap-2 items-center">
+                      <input
+                        type="color"
+                        value={widgetColor}
+                        onChange={(e) => setWidgetColor(e.target.value)}
+                        className="w-10 h-10 border border-gray-200 rounded-lg cursor-pointer p-0.5 bg-white"
+                      />
+                      <input
+                        type="text"
+                        value={widgetColor}
+                        onChange={(e) => setWidgetColor(e.target.value)}
+                        placeholder="#9333ea"
+                        className="flex-1 p-2.5 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all font-mono"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="block text-sm font-semibold text-gray-700">Popup Code</label>
+                    <button
+                      onClick={() => handleCopy(widgetCode)}
+                      className="text-purple-600 hover:text-purple-700 text-xs font-semibold flex items-center gap-1 transition-colors"
+                    >
+                      {copied ? (
+                        <>
+                          <Check className="w-3.5 h-3.5" />
+                          <span>Copied Code</span>
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="w-3.5 h-3.5" />
+                          <span>Copy Code</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                  <textarea
+                    readOnly
+                    value={widgetCode}
+                    rows={8}
+                    className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg text-xs text-gray-600 font-mono focus:outline-none resize-none"
+                  />
+                </div>
+
+                {/* Live Button Preview */}
+                <div className="border border-dashed border-gray-200 rounded-xl p-4 bg-gray-50/50 flex flex-col items-center">
+                  <span className="text-xs font-semibold text-gray-400 mb-3 uppercase tracking-wider">Button Preview</span>
+                  <button
+                    type="button"
+                    style={{ backgroundColor: widgetColor }}
+                    className="text-white px-6 py-3 rounded-lg font-semibold flex items-center gap-2 hover:opacity-90 active:scale-95 transition-all shadow-md cursor-default pointer-events-none"
+                  >
+                    <MessageSquare className="w-4.5 h-4.5" />
+                    <span>{widgetText}</span>
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Footer */}
+          <div className="p-4 bg-gray-50 border-t border-gray-100 flex justify-end">
+            <button
+              onClick={() => setSharingFormId(null)}
+              className="bg-gray-900 hover:bg-gray-800 text-white px-5 py-2.5 rounded-lg text-sm font-semibold transition-colors shadow-sm"
+            >
+              Done
+            </button>
+          </div>
+        </motion.div>
+      </motion.div>
+    )
   }
 
   const handleDeleteForm = async (formId, event) => {
@@ -1222,6 +1561,11 @@ export default function Forms() {
               </motion.div>
             </motion.div>
           )}
+        </AnimatePresence>
+
+        {/* Share/Embed Modal */}
+        <AnimatePresence>
+          {sharingFormId && renderShareModal()}
         </AnimatePresence>
 
         {/* Mobile Navigation */}

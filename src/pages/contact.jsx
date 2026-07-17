@@ -2,11 +2,12 @@
 
 import { useState } from "react"
 import { motion } from "framer-motion"
-import { Link } from "react-router-dom"
-import { Send, Mail, Phone, MapPin, ArrowLeft, CheckCircle } from "lucide-react"
+import { Send, Mail, Phone, MapPin, CheckCircle } from "lucide-react"
 import { collection, addDoc, serverTimestamp } from "firebase/firestore"
 import { db } from "../lib/firebase"
 import { useAuth } from "../hooks/use-auth"
+import PublicHeader from "../components/public-header"
+import PublicFooter from "../components/public-footer"
 
 const ContactPage = () => {
   const { user } = useAuth()
@@ -87,15 +88,9 @@ const ContactPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
-      <div className="max-w-7xl mx-auto px-4 py-12 sm:px-6 lg:px-8">
-        <div className="mb-8">
-          <Link to="/" className="inline-flex items-center text-blue-600 hover:text-blue-800">
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Home
-          </Link>
-        </div>
-
+    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white dark:from-slate-950 dark:to-slate-900 text-gray-800 dark:text-gray-200 flex flex-col justify-between transition-colors duration-200">
+      <PublicHeader />
+      <div className="max-w-7xl mx-auto px-4 pt-36 pb-20 sm:px-6 lg:px-8 flex-1">
         <div className="max-w-4xl mx-auto">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -103,16 +98,16 @@ const ContactPage = () => {
             transition={{ duration: 0.5 }}
             className="text-center mb-12"
           >
-            <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Get in Touch</h1>
-            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+            <h1 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">Get in Touch</h1>
+            <p className="text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
               Have questions about FormWise? Need help with your forms? Our team is here to assist you.
             </p>
           </motion.div>
 
-          <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+          <div className="bg-white dark:bg-slate-800 rounded-xl shadow-lg overflow-hidden border border-transparent dark:border-slate-700 transition-colors duration-200">
             <div className="grid grid-cols-1 md:grid-cols-2">
               {/* Contact Info */}
-              <div className="bg-blue-600 text-white p-8 md:p-12">
+              <div className="bg-blue-600 dark:bg-blue-700 text-white p-8 md:p-12">
                 <h2 className="text-2xl font-bold mb-6">Contact Information</h2>
                 <p className="text-blue-100 mb-8">
                   Fill out the form and our team will get back to you within 24 hours.
@@ -190,11 +185,11 @@ const ContactPage = () => {
                     animate={{ opacity: 1, scale: 1 }}
                     className="text-center py-8"
                   >
-                    <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-green-100 text-green-600 mb-4">
+                    <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-green-50 dark:bg-green-950/30 text-green-600 dark:text-green-400 border border-green-100 dark:border-green-900/30 mb-4 animate-bounce">
                       <CheckCircle className="w-8 h-8" />
                     </div>
-                    <h3 className="text-xl font-semibold text-gray-900 mb-2">Message Sent!</h3>
-                    <p className="text-gray-600 mb-6">
+                    <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">Message Sent!</h3>
+                    <p className="text-gray-600 dark:text-gray-300 mb-6">
                       Thank you for contacting us. We'll get back to you within 24 hours.
                     </p>
                     <button
@@ -207,7 +202,7 @@ const ContactPage = () => {
                           message: "",
                         })
                       }}
-                      className="text-blue-600 hover:text-blue-800 font-medium"
+                      className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 font-medium cursor-pointer"
                     >
                       Send another message
                     </button>
@@ -215,7 +210,7 @@ const ContactPage = () => {
                 ) : (
                   <form onSubmit={handleSubmit} className="space-y-6">
                     <div>
-                      <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
+                      <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                         Full Name
                       </label>
                       <input
@@ -224,16 +219,16 @@ const ContactPage = () => {
                         name="name"
                         value={formData.name}
                         onChange={handleChange}
-                        className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                          errors.name ? "border-red-300" : "border-gray-300"
+                        className={`w-full px-3 py-2 border dark:border-slate-700 bg-white dark:bg-slate-900 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors ${
+                          errors.name ? "border-red-300 dark:border-red-500/50" : "border-gray-300"
                         }`}
                         placeholder="Your full name"
                       />
-                      {errors.name && <p className="mt-1 text-sm text-red-600">{errors.name}</p>}
+                      {errors.name && <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.name}</p>}
                     </div>
 
                     <div>
-                      <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+                      <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                         Email Address
                       </label>
                       <input
@@ -242,16 +237,16 @@ const ContactPage = () => {
                         name="email"
                         value={formData.email}
                         onChange={handleChange}
-                        className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                          errors.email ? "border-red-300" : "border-gray-300"
+                        className={`w-full px-3 py-2 border dark:border-slate-700 bg-white dark:bg-slate-900 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors ${
+                          errors.email ? "border-red-400 dark:border-red-500/50" : "border-gray-300"
                         }`}
                         placeholder="your@email.com"
                       />
-                      {errors.email && <p className="mt-1 text-sm text-red-600">{errors.email}</p>}
+                      {errors.email && <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.email}</p>}
                     </div>
 
                     <div>
-                      <label htmlFor="subject" className="block text-sm font-medium text-gray-700 mb-1">
+                      <label htmlFor="subject" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                         Subject
                       </label>
                       <input
@@ -260,16 +255,16 @@ const ContactPage = () => {
                         name="subject"
                         value={formData.subject}
                         onChange={handleChange}
-                        className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                          errors.subject ? "border-red-300" : "border-gray-300"
+                        className={`w-full px-3 py-2 border dark:border-slate-700 bg-white dark:bg-slate-900 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors ${
+                          errors.subject ? "border-red-400 dark:border-red-500/50" : "border-gray-300"
                         }`}
                         placeholder="How can we help you?"
                       />
-                      {errors.subject && <p className="mt-1 text-sm text-red-600">{errors.subject}</p>}
+                      {errors.subject && <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.subject}</p>}
                     </div>
 
                     <div>
-                      <label htmlFor="message" className="block text-sm font-medium text-gray-700 mb-1">
+                      <label htmlFor="message" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                         Message
                       </label>
                       <textarea
@@ -278,18 +273,18 @@ const ContactPage = () => {
                         rows={5}
                         value={formData.message}
                         onChange={handleChange}
-                        className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                          errors.message ? "border-red-300" : "border-gray-300"
+                        className={`w-full px-3 py-2 border dark:border-slate-700 bg-white dark:bg-slate-900 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors ${
+                          errors.message ? "border-red-400 dark:border-red-500/50" : "border-gray-300"
                         }`}
                         placeholder="Tell us more about your inquiry..."
                       />
-                      {errors.message && <p className="mt-1 text-sm text-red-600">{errors.message}</p>}
+                      {errors.message && <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.message}</p>}
                     </div>
 
                     <button
                       type="submit"
                       disabled={isSubmitting}
-                      className="w-full flex items-center justify-center px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="w-full flex items-center justify-center px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                     >
                       {isSubmitting ? (
                         <>
@@ -329,6 +324,7 @@ const ContactPage = () => {
           </div>
         </div>
       </div>
+      <PublicFooter />
     </div>
   )
 }

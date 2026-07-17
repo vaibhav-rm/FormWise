@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
-import { useParams, useNavigate } from "react-router-dom"
+import { useParams, useNavigate, useSearchParams } from "react-router-dom"
 import { ArrowLeft, Send, CheckCircle, AlertCircle, Star, Upload, ImageIcon, Clock, Shield } from 'lucide-react'
 import { useForms, useFormResponses } from "../hooks/use-forms"
 // Rule matching helpers
@@ -64,8 +64,11 @@ const isFieldVisible = (fieldId, logicRules, currentFormData) => {
 export default function FormViewer() {
   const { formId } = useParams()
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const { getForm, incrementFormViews } = useForms()
   const { submitResponse } = useFormResponses()
+
+  const isEmbedded = searchParams.get("embed") === "true"
 
   const [form, setForm] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -94,6 +97,19 @@ export default function FormViewer() {
 
     loadForm()
   }, [formId, getForm, incrementFormViews, navigate])
+
+  // Inject custom JS after form loads
+  useEffect(() => {
+    if (form?.settings?.customJS) {
+      try {
+        // eslint-disable-next-line no-new-func
+        const fn = new Function(form.settings.customJS)
+        fn()
+      } catch (e) {
+        console.warn("Custom JS error:", e)
+      }
+    }
+  }, [form])
 
   const validateField = (field, value) => {
     if (field.required && (!value || value.toString().trim() === "")) {
@@ -192,11 +208,11 @@ export default function FormViewer() {
     const error = errors[field.id]
 
     const radiusClass = form.settings?.borderRadius || "rounded-lg"
-    let themeClasses = "border border-gray-300 bg-white"
+    let themeClasses = "border border-gray-300 bg-white text-gray-900"
     if (form.settings?.theme === "classic") {
-      themeClasses = "border-b-2 border-x-0 border-t-0 border-gray-300 bg-[#fafafa] focus:ring-0 rounded-none"
+      themeClasses = "border-b-2 border-x-0 border-t-0 border-gray-300 bg-[#fafafa] focus:ring-0 rounded-none text-gray-900"
     } else if (form.settings?.theme === "minimal") {
-      themeClasses = "border border-gray-200 bg-transparent rounded-none focus:ring-0"
+      themeClasses = "border border-gray-200 bg-transparent rounded-none focus:ring-0 text-gray-900"
     }
 
     const baseClasses = `w-full p-3 transition-all outline-none custom-form-input ${themeClasses} ${
@@ -240,6 +256,31 @@ export default function FormViewer() {
             className={baseClasses}
             required={field.required}
           />
+        )
+
+      case "time":
+        return (
+          <input
+            type="time"
+            value={value}
+            onChange={(e) => handleInputChange(field.id, e.target.value)}
+            className={baseClasses}
+            required={field.required}
+          />
+        )
+
+      case "heading":
+        return (
+          <h2 className="text-xl font-bold font-heading mb-1">
+            {field.label}
+          </h2>
+        )
+
+      case "paragraph":
+        return (
+          <p className="text-sm opacity-80 leading-relaxed whitespace-pre-line">
+            {field.label}
+          </p>
         )
 
       case "checkbox":
@@ -382,50 +423,58 @@ export default function FormViewer() {
 
   if (submitted) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50 flex items-center justify-center p-4">
+      <div className={isEmbedded ? "w-full bg-transparent flex items-center justify-center p-0" : "min-h-screen bg-gradient-to-br from-purple-50 to-blue-50 dark:from-slate-950 dark:to-slate-900 flex items-center justify-center p-4 transition-colors duration-200"}>
         <motion.div
-          className="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full text-center"
+          className={isEmbedded ? "bg-transparent w-full text-center p-4" : "bg-white dark:bg-slate-800 rounded-2xl shadow-xl dark:shadow-slate-950/50 p-8 max-w-md w-full text-center border border-gray-100 dark:border-slate-700 transition-colors duration-200"}
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.5 }}
+          style={{
+            color: isEmbedded && form.settings?.textColor ? form.settings.textColor : undefined,
+            fontFamily: form.settings?.fontFamily || "Inter",
+          }}
         >
-          <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-            <CheckCircle className="w-8 h-8 text-green-600" />
+          <div className="w-16 h-16 bg-green-100 dark:bg-green-950/30 rounded-full flex items-center justify-center mx-auto mb-6">
+            <CheckCircle className="w-8 h-8 text-green-600 dark:text-green-400" />
           </div>
 
-          <h1 className="text-2xl font-bold text-gray-900 mb-4">Thank You!</h1>
-          <p className="text-gray-600 mb-6">
+          <h1 className="text-2xl font-bold mb-4 text-gray-900 dark:text-white">Thank You!</h1>
+          <p className={isEmbedded ? "opacity-85 mb-6" : "text-gray-600 dark:text-gray-300 mb-6"}>
             {form.settings?.thankYouMessage || "Your response has been submitted successfully."}
           </p>
 
-          <button
-            onClick={() => navigate("/")}
-            className="bg-gradient-to-r from-purple-600 to-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:shadow-lg transition-all"
-          >
-            Back to Home
-          </button>
+          {!isEmbedded && (
+            <button
+              onClick={() => navigate("/")}
+              className="bg-gradient-to-r from-purple-600 to-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:shadow-lg transition-all"
+            >
+              Back to Home
+            </button>
+          )}
         </motion.div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50 py-4 sm:py-8 px-4">
-      <div className="max-w-2xl mx-auto">
+    <div className={isEmbedded ? "w-full bg-transparent p-0" : "min-h-screen bg-gradient-to-br from-purple-50 to-blue-50 dark:from-slate-950 dark:to-slate-900 py-4 sm:py-8 px-4 transition-colors duration-200"}>
+      <div className={isEmbedded ? "w-full" : "max-w-2xl mx-auto"}>
         {/* Header */}
-        <div className="mb-6 sm:mb-8">
-          <button
-            onClick={() => navigate("/")}
-            className="flex items-center text-gray-600 hover:text-purple-600 mb-4 transition-colors"
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to home
-          </button>
-        </div>
+        {!isEmbedded && (
+          <div className="mb-6 sm:mb-8">
+            <button
+              onClick={() => navigate("/")}
+              className="flex items-center text-gray-600 dark:text-gray-400 hover:text-purple-600 dark:hover:text-purple-400 mb-4 transition-colors"
+            >
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back to home
+            </button>
+          </div>
+        )}
 
         {/* Form */}
         <motion.div
-          className={`bg-white border border-gray-200 transition-all duration-300 ${form.settings?.borderRadius || "rounded-xl"} ${form.settings?.shadowStyle || "shadow-xl"}`}
+          className={`bg-white dark:bg-slate-800 transition-all duration-300 ${isEmbedded ? "border-0 shadow-none" : `border border-gray-200 dark:border-slate-700 ${form.settings?.shadowStyle || "shadow-xl"}`} ${form.settings?.borderRadius || "rounded-xl"}`}
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
@@ -451,6 +500,7 @@ export default function FormViewer() {
             .custom-form-radio:checked::after {
               background-color: ${form.settings?.primaryColor || '#7c3aed'} !important;
             }
+            ${form.settings?.customCSS || ""}
           `}} />
           {/* Form Header */}
           <div className="p-6 sm:p-8 border-b border-gray-200">
@@ -478,6 +528,19 @@ export default function FormViewer() {
               {form.fields?.map((field, index) => {
                 const visible = isFieldVisible(field.id, form.settings?.logicRules, formData);
                 if (!visible) return null;
+                if (field.type === "heading" || field.type === "paragraph") {
+                  return (
+                    <motion.div
+                      key={field.id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.4, delay: index * 0.1 }}
+                    >
+                      {renderField(field)}
+                    </motion.div>
+                  )
+                }
+
                 return (
                   <motion.div
                     key={field.id}
@@ -486,12 +549,12 @@ export default function FormViewer() {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.4, delay: index * 0.1 }}
                   >
-                    <label className="block text-sm font-medium text-gray-900">
+                    <label className="block text-sm font-medium opacity-90">
                       {field.label}
                       {field.required && <span className="text-red-500 ml-1">*</span>}
                     </label>
 
-                    {field.description && <p className="text-sm text-gray-600 mb-2">{field.description}</p>}
+                    {field.description && <p className="text-sm opacity-70 mb-2">{field.description}</p>}
 
                     {renderField(field)}
 

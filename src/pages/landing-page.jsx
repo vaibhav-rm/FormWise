@@ -4,6 +4,8 @@ import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Helmet } from "react-helmet"
 import { useNavigate } from "react-router-dom"
+import PublicHeader from "../components/public-header"
+import PublicFooter from "../components/public-footer"
 import {
   Menu,
   X,
@@ -36,109 +38,6 @@ const debounce = (func, wait) => {
     clearTimeout(timeout)
     timeout = setTimeout(later, wait)
   }
-}
-
-// Header Component
-const Header = () => {
-  const [isMenuOpen, setIsMenuOpen] = useState(false)
-  const [isScrolled, setIsScrolled] = useState(false)
-  const navigate = useNavigate()
-
-  useEffect(() => {
-    const handleScroll = debounce(() => {
-      setIsScrolled(window.scrollY > 20)
-    }, 100)
-
-    window.addEventListener("scroll", handleScroll)
-    return () => window.removeEventListener("scroll", handleScroll)
-  }, [])
-
-  return (
-    <motion.header
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 h-20 ${isScrolled ? "bg-white/80 backdrop-blur-lg shadow-lg" : "bg-transparent"}`}
-      initial={{ y: -100 }}
-      animate={{ y: 0 }}
-      transition={{ duration: 0.6 }}
-    >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
-          <motion.div className="flex items-center space-x-2" whileHover={{ scale: 1.05 }}>
-            <div className="w-8 h-8 bg-gradient-to-r from-purple-600 to-blue-600 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-sm">F</span>
-            </div>
-            <span className="text-xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
-              FormWise
-            </span>
-          </motion.div>
-
-          <nav className="hidden md:flex items-center space-x-8">
-            {["Features", "Pricing", "Templates", "About"].map((item) => (
-              <motion.a
-                key={item}
-                href={`#${item.toLowerCase()}`}
-                className="text-gray-700 hover:text-purple-600 transition-colors font-medium"
-                whileHover={{ y: -2 }}
-              >
-                {item}
-              </motion.a>
-            ))}
-          </nav>
-
-          <div className="hidden md:flex items-center space-x-4">
-            <button className="text-gray-700 hover:text-purple-600 font-medium" onClick={() => navigate("/auth")}>
-              Sign In
-            </button>
-            <motion.button
-              className="bg-gradient-to-r from-purple-600 to-blue-600 text-white px-6 py-2 rounded-lg font-medium hover:shadow-lg transition-all"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => navigate("/auth")}
-            >
-              Get Started
-            </motion.button>
-          </div>
-
-          <button className="md:hidden" onClick={() => setIsMenuOpen(!isMenuOpen)}>
-            {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
-          </button>
-        </div>
-      </div>
-
-      <AnimatePresence>
-        {isMenuOpen && (
-          <motion.div
-            className="md:hidden bg-white border-t"
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-          >
-            <div className="px-4 py-4 space-y-4">
-              {["Features", "Pricing", "Templates", "About"].map((item) => (
-                <a
-                  key={item}
-                  href={`#${item.toLowerCase()}`}
-                  className="block text-gray-700 hover:text-purple-600 font-medium"
-                >
-                  {item}
-                </a>
-              ))}
-              <div className="pt-4 border-t space-y-2">
-                <button className="block w-full text-left text-gray-700 font-medium" onClick={() => navigate("/auth")}>
-                  Sign In
-                </button>
-                <button
-                  className="block w-full bg-gradient-to-r from-purple-600 to-blue-600 text-white px-6 py-2 rounded-lg font-medium"
-                  onClick={() => navigate("/auth")}
-                >
-                  Get Started
-                </button>
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </motion.header>
-  )
 }
 
 // Hero Section
@@ -309,14 +208,14 @@ const HeroSection = () => {
     }
 
     // Theme background
-    let themeBg = "bg-white"
+    let themeBg = "bg-white text-gray-900"
     if (formTheme === "glass") {
-      themeBg = "bg-white/40 backdrop-blur-xl"
+      themeBg = "bg-white/40 backdrop-blur-xl text-gray-900"
     }
 
     // Apply color palettes
     if (formColor === "dark") {
-      themeBg = formTheme === "glass" ? "bg-gray-900/60 backdrop-blur-xl" : "bg-gray-900 text-white"
+      themeBg = formTheme === "glass" ? "bg-gray-900/60 backdrop-blur-xl text-white" : "bg-gray-900 text-white"
       themeBorder = formTheme === "brutalist" ? "border-4 border-white" : "border-gray-800"
     }
 
@@ -324,7 +223,7 @@ const HeroSection = () => {
   }
 
   const getInputClasses = () => {
-    let base = "w-full p-3 transition-all outline-none"
+    let base = "w-full p-3 transition-all outline-none text-gray-900 dark:text-gray-900"
     let border = "border border-gray-300 focus:border-purple-500 focus:ring-2 focus:ring-purple-200"
     let bg = "bg-gray-50/50"
 
@@ -338,6 +237,7 @@ const HeroSection = () => {
 
     if (formColor === "dark") {
       bg = "bg-gray-800"
+      base = "w-full p-3 transition-all outline-none text-white dark:text-white"
       border = formTheme === "brutalist" ? "border-2 border-white focus:bg-gray-700" : "border-gray-700 focus:border-yellow-400"
     }
 
@@ -370,12 +270,12 @@ const HeroSection = () => {
   const activeForm = interactiveForms[activeTab]
 
   return (
-    <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-100 pt-24 pb-12">
+    <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-100 dark:from-slate-950 dark:via-slate-900 dark:to-indigo-950/45 pt-24 pb-12 transition-colors duration-200">
       <div className="absolute inset-0">
         {[...Array(6)].map((_, i) => (
           <motion.div
             key={i}
-            className="absolute w-64 h-64 bg-gradient-to-r from-purple-200/30 to-blue-200/30 rounded-full blur-3xl"
+            className="absolute w-64 h-64 bg-gradient-to-r from-purple-200/30 to-blue-200/30 dark:from-purple-900/10 dark:to-blue-900/10 rounded-full blur-3xl"
             animate={{ x: [0, 100, 0], y: [0, -100, 0], scale: [1, 1.2, 1] }}
             transition={{ duration: 10 + i * 2, repeat: Number.POSITIVE_INFINITY, ease: "easeInOut" }}
             style={{ left: `${20 + i * 15}%`, top: `${10 + i * 10}%` }}
@@ -388,17 +288,17 @@ const HeroSection = () => {
           <h1 className="text-5xl md:text-7xl font-bold mb-6 bg-gradient-to-r from-purple-600 via-blue-600 to-indigo-600 bg-clip-text text-transparent leading-tight">
             Beautiful Forms
             <br />
-            <span className="text-gray-900">Made Simple</span>
+            <span className="text-gray-900 dark:text-white">Made Simple</span>
           </h1>
 
-          <p className="text-xl md:text-2xl text-gray-600 mb-8 max-w-3xl mx-auto leading-relaxed">
+          <p className="text-xl md:text-2xl text-gray-600 dark:text-gray-300 mb-8 max-w-3xl mx-auto leading-relaxed">
             Create stunning, interactive forms that your users will love. Go beyond Google Forms with advanced logic,
             beautiful themes, and powerful analytics.
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-12">
             <motion.button
-              className="bg-gradient-to-r from-purple-600 to-blue-600 text-white px-8 py-4 rounded-xl font-semibold text-lg hover:shadow-2xl transition-all flex items-center group"
+              className="bg-gradient-to-r from-purple-600 to-blue-600 text-white px-8 py-4 rounded-xl font-semibold text-lg hover:shadow-2xl transition-all flex items-center group cursor-pointer"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => navigate("/auth")}
@@ -409,14 +309,14 @@ const HeroSection = () => {
 
             <a
               href="#features"
-              className="bg-white/80 backdrop-blur-sm text-gray-700 px-8 py-4 rounded-xl font-semibold text-lg hover:bg-white transition-all flex items-center border border-gray-200"
+              className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm text-gray-700 dark:text-gray-200 px-8 py-4 rounded-xl font-semibold text-lg hover:bg-white dark:hover:bg-slate-700 transition-all flex items-center border border-gray-200 dark:border-slate-700"
             >
               Explore Features
             </a>
           </div>
 
           <motion.div
-            className="text-sm text-gray-500"
+            className="text-sm text-gray-500 dark:text-gray-400"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 1 }}
@@ -432,7 +332,7 @@ const HeroSection = () => {
           transition={{ duration: 1, delay: 0.5 }}
         >
           {/* Dashboard Preview */}
-          <div className="bg-white rounded-3xl shadow-2xl max-w-6xl mx-auto border border-gray-200 overflow-hidden">
+          <div className="bg-white dark:bg-slate-800 rounded-3xl shadow-2xl max-w-6xl mx-auto border border-gray-200 dark:border-slate-700 overflow-hidden transition-colors duration-200">
             {/* Dashboard Header */}
             <div className="bg-gradient-to-r from-gray-900 to-gray-800 px-6 py-4">
               <div className="flex items-center justify-between">
@@ -452,9 +352,9 @@ const HeroSection = () => {
             </div>
 
             {/* Dashboard Content */}
-            <div className="p-4 sm:p-6 bg-gray-50 text-left">
+            <div className="p-4 sm:p-6 bg-gray-50 dark:bg-slate-900/60 text-left transition-colors duration-200">
               {/* Form Preview Tabs */}
-              <div className="flex justify-between items-center border-b border-gray-200 mb-6 flex-wrap gap-2">
+              <div className="flex justify-between items-center border-b border-gray-200 dark:border-slate-700 mb-6 flex-wrap gap-2">
                 <div className="flex space-x-1 overflow-x-auto">
                   {interactiveForms.map((form, index) => (
                     <button
@@ -463,17 +363,17 @@ const HeroSection = () => {
                         setActiveTab(index)
                         setFormResponses({})
                       }}
-                      className={`px-4 sm:px-6 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
+                      className={`px-4 sm:px-6 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap cursor-pointer ${
                         activeTab === index
-                          ? "border-purple-600 text-purple-600 bg-purple-50"
-                          : "border-transparent text-gray-500 hover:text-gray-700"
+                          ? "border-purple-600 text-purple-600 bg-purple-50 dark:bg-purple-950/20"
+                          : "border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
                       }`}
                     >
                       {form.title}
                     </button>
                   ))}
                 </div>
-                <div className="text-xs text-gray-500 flex items-center space-x-2 bg-purple-100/50 text-purple-700 px-3 py-1 rounded-full border border-purple-200/50">
+                <div className="text-xs text-gray-500 dark:text-gray-400 flex items-center space-x-2 bg-purple-100/50 dark:bg-purple-950/30 text-purple-700 dark:text-purple-400 px-3 py-1 rounded-full border border-purple-200/50 dark:border-purple-900/30">
                   <span className="relative flex h-2.5 w-2.5">
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-75"></span>
                     <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-purple-500"></span>
@@ -486,15 +386,15 @@ const HeroSection = () => {
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
                 
                 {/* Style Customizer Sidebar (1/3 width) */}
-                <div className="bg-white rounded-2xl border border-gray-200 p-5 space-y-5 shadow-sm">
-                  <div className="flex items-center space-x-2 pb-3 border-b border-gray-100">
+                <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-200 dark:border-slate-700 p-5 space-y-5 shadow-sm transition-colors duration-200">
+                  <div className="flex items-center space-x-2 pb-3 border-b border-gray-100 dark:border-slate-700">
                     <Settings className="w-5 h-5 text-purple-600" />
-                    <h3 className="font-semibold text-gray-900 text-base">Form Customizer</h3>
+                    <h3 className="font-semibold text-gray-900 dark:text-white text-base">Form Customizer</h3>
                   </div>
 
                   {/* Theme Select */}
                   <div>
-                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+                    <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
                       Layout Theme
                     </label>
                     <div className="grid grid-cols-3 gap-1.5">
@@ -506,10 +406,10 @@ const HeroSection = () => {
                         <button
                           key={t.id}
                           onClick={() => setFormTheme(t.id)}
-                          className={`py-1.5 px-2 text-xs font-medium border rounded-lg transition-all ${
+                          className={`py-1.5 px-2 text-xs font-medium border rounded-lg transition-all cursor-pointer ${
                             formTheme === t.id 
-                              ? "bg-purple-50 border-purple-500 text-purple-700" 
-                              : "border-gray-200 hover:bg-gray-50 text-gray-600"
+                              ? "bg-purple-50 dark:bg-purple-950/30 border-purple-500 text-purple-700 dark:text-purple-400" 
+                              : "border-gray-200 dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-700 text-gray-600 dark:text-gray-300"
                           }`}
                         >
                           {t.label}
@@ -520,7 +420,7 @@ const HeroSection = () => {
 
                   {/* Color Preset Select */}
                   <div>
-                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+                    <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
                       Color Palette
                     </label>
                     <div className="grid grid-cols-2 gap-1.5">
@@ -533,10 +433,10 @@ const HeroSection = () => {
                         <button
                           key={c.id}
                           onClick={() => setFormColor(c.id)}
-                          className={`py-1.5 px-2 text-xs font-medium border rounded-lg transition-all ${
+                          className={`py-1.5 px-2 text-xs font-medium border rounded-lg transition-all cursor-pointer ${
                             formColor === c.id 
-                              ? "bg-purple-50 border-purple-500 text-purple-700 font-semibold" 
-                              : "border-gray-200 hover:bg-gray-50 text-gray-600"
+                              ? "bg-purple-50 dark:bg-purple-950/30 border-purple-500 text-purple-700 dark:text-purple-400 font-semibold" 
+                              : "border-gray-200 dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-700 text-gray-600 dark:text-gray-300"
                           }`}
                         >
                           {c.label}
@@ -547,13 +447,13 @@ const HeroSection = () => {
 
                   {/* Font Select */}
                   <div>
-                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+                    <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
                       Typography Font
                     </label>
                     <select
                       value={formFont}
                       onChange={(e) => setFormFont(e.target.value)}
-                      className="w-full text-xs p-2 border border-gray-200 rounded-lg outline-none focus:ring-1 focus:ring-purple-500 bg-white"
+                      className="w-full text-xs p-2 border border-gray-200 dark:border-slate-700 rounded-lg outline-none focus:ring-1 focus:ring-purple-500 bg-white dark:bg-slate-900 text-gray-800 dark:text-gray-200"
                     >
                       <option value="Inter">Outfit (Sleek Sans)</option>
                       <option value="Space Grotesk">Space Grotesk (Modern Tech)</option>
@@ -563,7 +463,7 @@ const HeroSection = () => {
 
                   {/* Border Radius */}
                   <div>
-                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+                    <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
                       Corner Roundness
                     </label>
                     <div className="grid grid-cols-3 gap-1.5">
@@ -575,10 +475,10 @@ const HeroSection = () => {
                         <button
                           key={r.id}
                           onClick={() => setFormRadius(r.id)}
-                          className={`py-1 px-2 text-xs font-medium border rounded-lg transition-all ${
+                          className={`py-1 px-2 text-xs font-medium border rounded-lg transition-all cursor-pointer ${
                             formRadius === r.id 
-                              ? "bg-purple-50 border-purple-500 text-purple-700" 
-                              : "border-gray-200 hover:bg-gray-50 text-gray-600"
+                              ? "bg-purple-50 dark:bg-purple-950/30 border-purple-500 text-purple-700 dark:text-purple-400" 
+                              : "border-gray-200 dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-700 text-gray-600 dark:text-gray-300"
                           }`}
                         >
                           {r.label}
@@ -588,35 +488,35 @@ const HeroSection = () => {
                   </div>
 
                   {/* Add Field Section */}
-                  <div className="pt-4 border-t border-gray-100">
-                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+                  <div className="pt-4 border-t border-gray-100 dark:border-slate-700">
+                    <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
                       Sandbox: Add Field to Form
                     </label>
                     <div className="grid grid-cols-2 gap-1.5">
                       <button
                         onClick={() => addNewField("text")}
-                        className="py-1.5 px-2 bg-gray-50 border border-gray-200 rounded-lg text-xs font-medium hover:bg-purple-50 hover:text-purple-600 hover:border-purple-300 transition-all flex items-center justify-center space-x-1"
+                        className="py-1.5 px-2 bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-lg text-xs font-medium text-gray-700 dark:text-gray-300 hover:bg-purple-50 dark:hover:bg-purple-950/30 hover:text-purple-600 hover:border-purple-300 transition-all flex items-center justify-center space-x-1 cursor-pointer"
                       >
                         <Plus className="w-3.5 h-3.5" />
                         <span>Short Text</span>
                       </button>
                       <button
                         onClick={() => addNewField("email")}
-                        className="py-1.5 px-2 bg-gray-50 border border-gray-200 rounded-lg text-xs font-medium hover:bg-purple-50 hover:text-purple-600 hover:border-purple-300 transition-all flex items-center justify-center space-x-1"
+                        className="py-1.5 px-2 bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-lg text-xs font-medium text-gray-700 dark:text-gray-400 hover:bg-purple-50 dark:hover:bg-purple-950/30 hover:text-purple-600 hover:border-purple-300 transition-all flex items-center justify-center space-x-1 cursor-pointer"
                       >
                         <Plus className="w-3.5 h-3.5" />
                         <span>Email</span>
                       </button>
                       <button
                         onClick={() => addNewField("rating")}
-                        className="py-1.5 px-2 bg-gray-50 border border-gray-200 rounded-lg text-xs font-medium hover:bg-purple-50 hover:text-purple-600 hover:border-purple-300 transition-all flex items-center justify-center space-x-1"
+                        className="py-1.5 px-2 bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-lg text-xs font-medium text-gray-700 dark:text-gray-400 hover:bg-purple-50 dark:hover:bg-purple-950/30 hover:text-purple-600 hover:border-purple-300 transition-all flex items-center justify-center space-x-1 cursor-pointer"
                       >
                         <Plus className="w-3.5 h-3.5" />
                         <span>Rating Stars</span>
                       </button>
                       <button
                         onClick={() => addNewField("checkbox")}
-                        className="py-1.5 px-2 bg-gray-50 border border-gray-200 rounded-lg text-xs font-medium hover:bg-purple-50 hover:text-purple-600 hover:border-purple-300 transition-all flex items-center justify-center space-x-1"
+                        className="py-1.5 px-2 bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-lg text-xs font-medium text-gray-700 dark:text-gray-400 hover:bg-purple-50 dark:hover:bg-purple-950/30 hover:text-purple-600 hover:border-purple-300 transition-all flex items-center justify-center space-x-1 cursor-pointer"
                       >
                         <Plus className="w-3.5 h-3.5" />
                         <span>Checkbox</span>
@@ -624,8 +524,8 @@ const HeroSection = () => {
                     </div>
                   </div>
                   
-                  <div className="bg-purple-50 rounded-xl p-3 border border-purple-100">
-                    <p className="text-xs text-purple-700 leading-relaxed">
+                  <div className="bg-purple-50 dark:bg-purple-950/20 rounded-xl p-3 border border-purple-100 dark:border-purple-900/30">
+                    <p className="text-xs text-purple-700 dark:text-purple-300 leading-relaxed">
                       💡 **Tip:** Double-click form title or field labels on the right canvas to live edit their text!
                     </p>
                   </div>
@@ -641,26 +541,26 @@ const HeroSection = () => {
                         initial={{ opacity: 0, scale: 0.95 }}
                         animate={{ opacity: 1, scale: 1 }}
                         exit={{ opacity: 0 }}
-                        className={`w-full max-w-lg p-8 text-center bg-white border border-gray-200 shadow-xl rounded-2xl flex flex-col items-center justify-center`}
+                        className="w-full max-w-lg p-8 text-center bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 shadow-xl rounded-2xl flex flex-col items-center justify-center transition-colors duration-200"
                         style={fontStyle}
                       >
-                        <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                          <Check className="w-8 h-8 text-green-600 stroke-[3px]" />
+                        <div className="w-16 h-16 bg-green-100 dark:bg-green-900/20 rounded-full flex items-center justify-center mx-auto mb-6">
+                          <Check className="w-8 h-8 text-green-600 dark:text-green-400 stroke-[3px]" />
                         </div>
-                        <h3 className="text-2xl font-bold text-gray-900 mb-2">Form Submitted!</h3>
-                        <p className="text-gray-600 mb-6">
+                        <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Form Submitted!</h3>
+                        <p className="text-gray-600 dark:text-gray-300 mb-6">
                           Your response has been saved to our simulated sandbox. Ready to build a real form?
                         </p>
                         <div className="flex space-x-3">
                           <button
                             onClick={() => resetForm(activeTab)}
-                            className="px-4 py-2 border border-gray-200 rounded-lg text-sm text-gray-700 hover:bg-gray-50"
+                            className="px-4 py-2 border border-gray-200 dark:border-slate-700 rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors"
                           >
                             Submit Again
                           </button>
                           <button
                             onClick={() => navigate("/auth")}
-                            className="px-5 py-2 bg-purple-600 text-white rounded-lg text-sm font-semibold hover:bg-purple-700"
+                            className="px-5 py-2 bg-purple-600 text-white rounded-lg text-sm font-semibold hover:bg-purple-700 cursor-pointer"
                           >
                             Create Free Account
                           </button>
@@ -690,7 +590,7 @@ const HeroSection = () => {
                             />
                           ) : (
                             <h3 
-                              className="text-xl sm:text-2xl font-bold cursor-pointer hover:bg-purple-50 hover:text-purple-700 px-1 py-0.5 rounded transition-all truncate"
+                              className="text-xl sm:text-2xl font-bold cursor-pointer hover:bg-purple-50 dark:hover:bg-purple-950/40 hover:text-purple-700 dark:hover:text-purple-300 px-1 py-0.5 rounded transition-all truncate"
                               title="Double-click to edit title"
                               onDoubleClick={() => startEditing("title", activeForm.title)}
                             >
@@ -730,7 +630,7 @@ const HeroSection = () => {
                                     />
                                   ) : (
                                     <label
-                                      className="text-sm font-semibold cursor-pointer hover:bg-purple-50 hover:text-purple-700 px-1 py-0.5 rounded transition-all flex-1 mr-2"
+                                      className="text-sm font-semibold cursor-pointer hover:bg-purple-50 dark:hover:bg-purple-950/40 hover:text-purple-700 dark:hover:text-purple-300 px-1 py-0.5 rounded transition-all flex-1 mr-2"
                                       title="Double-click to edit label"
                                       onDoubleClick={() => startEditing(field.id, field.label)}
                                     >
@@ -742,7 +642,7 @@ const HeroSection = () => {
                                   <button
                                     type="button"
                                     onClick={(e) => deleteField(field.id, e)}
-                                    className="opacity-0 group-hover:opacity-100 p-1 text-red-500 hover:bg-red-50 rounded transition-all cursor-pointer"
+                                    className="opacity-0 group-hover:opacity-100 p-1 text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 rounded transition-all cursor-pointer"
                                     title="Delete field"
                                   >
                                     <Trash2 className="w-3.5 h-3.5" />
@@ -830,7 +730,7 @@ const HeroSection = () => {
                                             }}
                                             className="rounded border-gray-300 text-purple-600 focus:ring-purple-500 cursor-pointer"
                                           />
-                                          <span className="text-sm text-gray-600">{option}</span>
+                                          <span className="text-sm text-gray-600 dark:text-gray-300">{option}</span>
                                         </label>
                                       )
                                     })}
@@ -851,7 +751,7 @@ const HeroSection = () => {
                           <button
                             type="button"
                             onClick={() => resetForm(activeTab)}
-                            className="text-xs text-gray-500 hover:text-gray-700 underline"
+                            className="text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 underline cursor-pointer"
                           >
                             Reset Form
                           </button>
@@ -908,7 +808,7 @@ const FeaturesSection = () => {
   ]
 
   return (
-    <section id="features" className="py-24 bg-white">
+    <section id="features" className="py-24 bg-white dark:bg-slate-900 transition-colors duration-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div
           className="text-center mb-16"
@@ -920,7 +820,7 @@ const FeaturesSection = () => {
           <h2 className="text-4xl md:text-5xl font-bold mb-6 bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
             Everything you need to create amazing forms
           </h2>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+          <p className="text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
             From simple contact forms to complex surveys, FormWise has all the tools you need to collect, analyze, and
             act on your data.
           </p>
@@ -930,7 +830,7 @@ const FeaturesSection = () => {
           {features.map((feature, index) => (
             <motion.div
               key={index}
-              className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl p-8 hover:shadow-xl transition-all duration-300 border border-gray-200"
+              className="bg-gradient-to-br from-gray-50 to-gray-100 dark:from-slate-800 dark:to-slate-900 rounded-2xl p-8 hover:shadow-xl transition-all duration-300 border border-gray-200 dark:border-slate-700/80 transition-colors duration-200"
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: index * 0.1 }}
@@ -940,8 +840,8 @@ const FeaturesSection = () => {
               <div className="bg-gradient-to-r from-purple-600 to-blue-600 w-16 h-16 rounded-xl flex items-center justify-center text-white mb-6">
                 {feature.icon}
               </div>
-              <h3 className="text-xl font-semibold mb-4 text-gray-900">{feature.title}</h3>
-              <p className="text-gray-600 leading-relaxed">{feature.description}</p>
+              <h3 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">{feature.title}</h3>
+              <p className="text-gray-600 dark:text-gray-300 leading-relaxed">{feature.description}</p>
             </motion.div>
           ))}
         </div>
@@ -994,7 +894,7 @@ const PricingSection = () => {
   ]
 
   return (
-    <section id="pricing" className="py-24 bg-gradient-to-br from-purple-50 to-blue-50">
+    <section id="pricing" className="py-24 bg-gradient-to-br from-purple-50 to-blue-50 dark:from-slate-950 dark:to-indigo-950/20 transition-colors duration-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div
           className="text-center mb-16"
@@ -1006,14 +906,14 @@ const PricingSection = () => {
           <h2 className="text-4xl md:text-5xl font-bold mb-6 bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
             Simple, transparent pricing
           </h2>
-          <p className="text-xl text-gray-600 mb-8">
+          <p className="text-xl text-gray-600 dark:text-gray-300 mb-8">
             Choose the plan that's right for you. Upgrade or downgrade at any time.
           </p>
 
           <div className="flex items-center justify-center mb-8">
-            <span className={`mr-3 ${!isAnnual ? "text-gray-900 font-semibold" : "text-gray-500"}`}>Monthly</span>
+            <span className={`mr-3 ${!isAnnual ? "text-gray-900 dark:text-white font-semibold" : "text-gray-500 dark:text-gray-400"}`}>Monthly</span>
             <motion.button
-              className="relative w-14 h-8 bg-gradient-to-r from-purple-600 to-blue-600 rounded-full p-1"
+              className="relative w-14 h-8 bg-gradient-to-r from-purple-600 to-blue-600 rounded-full p-1 cursor-pointer"
               onClick={() => setIsAnnual(!isAnnual)}
               whileTap={{ scale: 0.95 }}
             >
@@ -1023,8 +923,8 @@ const PricingSection = () => {
                 transition={{ type: "spring", stiffness: 500, damping: 30 }}
               />
             </motion.button>
-            <span className={`ml-3 ${isAnnual ? "text-gray-900 font-semibold" : "text-gray-500"}`}>
-              Annual<span className="ml-2 bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">Save 33%</span>
+            <span className={`ml-3 ${isAnnual ? "text-gray-900 dark:text-white font-semibold" : "text-gray-500 dark:text-gray-400"}`}>
+              Annual<span className="ml-2 bg-green-100 dark:bg-green-950/30 text-green-800 dark:text-green-400 text-xs px-2 py-1 rounded-full border border-transparent dark:border-green-900/30">Save 33%</span>
             </span>
           </div>
         </motion.div>
@@ -1033,7 +933,7 @@ const PricingSection = () => {
           {plans.map((plan, index) => (
             <motion.div
               key={index}
-              className={`bg-white rounded-2xl p-8 relative ${plan.popular ? "ring-2 ring-purple-600 shadow-2xl scale-105" : "shadow-lg"}`}
+              className={`bg-white dark:bg-slate-800 rounded-2xl p-8 relative transition-colors duration-200 border border-transparent dark:border-slate-700 ${plan.popular ? "ring-2 ring-purple-600 shadow-2xl scale-105" : "shadow-lg"}`}
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: index * 0.1 }}
@@ -1049,14 +949,14 @@ const PricingSection = () => {
               )}
 
               <div className="text-center mb-8">
-                <h3 className="text-2xl font-bold mb-2">{plan.name}</h3>
-                <p className="text-gray-600 mb-4">{plan.description}</p>
+                <h3 className="text-2xl font-bold mb-2 text-gray-900 dark:text-white">{plan.name}</h3>
+                <p className="text-gray-600 dark:text-gray-400 mb-4">{plan.description}</p>
                 <div className="mb-4">
-                  <span className="text-5xl font-bold">${isAnnual ? plan.price.annual : plan.price.monthly}</span>
-                  <span className="text-gray-600 ml-2">/month</span>
+                  <span className="text-5xl font-bold text-gray-900 dark:text-white">${isAnnual ? plan.price.annual : plan.price.monthly}</span>
+                  <span className="text-gray-600 dark:text-gray-400 ml-2">/month</span>
                 </div>
                 {isAnnual && plan.price.annual < plan.price.monthly && (
-                  <p className="text-sm text-green-600 font-medium">
+                  <p className="text-sm text-green-600 dark:text-green-400 font-medium">
                     Save ${(plan.price.monthly - plan.price.annual) * 12}/year
                   </p>
                 )}
@@ -1066,13 +966,13 @@ const PricingSection = () => {
                 {plan.features.map((feature, featureIndex) => (
                   <li key={featureIndex} className="flex items-center">
                     <Check className="w-5 h-5 text-green-500 mr-3 flex-shrink-0" />
-                    <span className="text-gray-700">{feature}</span>
+                    <span className="text-gray-700 dark:text-gray-300">{feature}</span>
                   </li>
                 ))}
               </ul>
 
               <motion.button
-                className={`w-full py-3 px-6 rounded-xl font-semibold transition-all ${plan.popular ? "bg-gradient-to-r from-purple-600 to-blue-600 text-white hover:shadow-lg" : "bg-gray-100 text-gray-900 hover:bg-gray-200"}`}
+                className={`w-full py-3 px-6 rounded-xl font-semibold transition-all cursor-pointer ${plan.popular ? "bg-gradient-to-r from-purple-600 to-blue-600 text-white hover:shadow-lg" : "bg-gray-100 dark:bg-slate-700 text-gray-900 dark:text-gray-100 hover:bg-gray-200 dark:hover:bg-slate-600"}`}
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={() => navigate("/auth")}
@@ -1116,7 +1016,7 @@ const TestimonialsSection = () => {
   ]
 
   return (
-    <section className="py-24 bg-white">
+    <section className="py-24 bg-white dark:bg-slate-900 transition-colors duration-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div
           className="text-center mb-16"
@@ -1128,14 +1028,14 @@ const TestimonialsSection = () => {
           <h2 className="text-4xl md:text-5xl font-bold mb-6 bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
             Loved by teams worldwide
           </h2>
-          <p className="text-xl text-gray-600">See what our customers have to say about FormWise</p>
+          <p className="text-xl text-gray-600 dark:text-gray-300">See what our customers have to say about FormWise</p>
         </motion.div>
 
         <div className="grid md:grid-cols-3 gap-8">
           {testimonials.map((testimonial, index) => (
             <motion.div
               key={index}
-              className="bg-gcradient-to-br from-gray-50 to-gray-100 rounded-2xl p-8 border border-gray-200"
+              className="bg-gradient-to-br from-gray-50 to-gray-100 dark:from-slate-800 dark:to-slate-900 rounded-2xl p-8 border border-gray-200 dark:border-slate-700/80 transition-colors duration-200"
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: index * 0.1 }}
@@ -1147,16 +1047,16 @@ const TestimonialsSection = () => {
                   <Star key={i} className="w-5 h-5 text-yellow-400 fill-current" />
                 ))}
               </div>
-              <p className="text-gray-700 mb-6 leading-relaxed">"{testimonial.content}"</p>
+              <p className="text-gray-700 dark:text-gray-300 mb-6 leading-relaxed">"{testimonial.content}"</p>
               <div className="flex items-center">
                 <img
                   src={testimonial.avatar || "/placeholder.svg"}
                   alt={testimonial.name}
-                  className="w-12 h-12 rounded-full mr-4"
+                  className="w-12 h-12 rounded-full mr-4 bg-gray-200 dark:bg-slate-700"
                 />
                 <div>
-                  <h4 className="font-semibold text-gray-900">{testimonial.name}</h4>
-                  <p className="text-gray-600 text-sm">
+                  <h4 className="font-semibold text-gray-900 dark:text-white">{testimonial.name}</h4>
+                  <p className="text-gray-600 dark:text-gray-400 text-sm">
                     {testimonial.role} at {testimonial.company}
                   </p>
                 </div>
@@ -1202,7 +1102,7 @@ const FAQSection = () => {
   ]
 
   return (
-    <section className="py-24 bg-gradient-to-br from-purple-50 to-blue-50">
+    <section className="py-24 bg-gradient-to-br from-purple-50 to-blue-50 dark:from-slate-950 dark:to-indigo-950/20 transition-colors duration-200">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div
           className="text-center mb-16"
@@ -1214,28 +1114,28 @@ const FAQSection = () => {
           <h2 className="text-4xl md:text-5xl font-bold mb-6 bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
             Frequently Asked Questions
           </h2>
-          <p className="text-xl text-gray-600">Everything you need to know about FormWise</p>
+          <p className="text-xl text-gray-600 dark:text-gray-300">Everything you need to know about FormWise</p>
         </motion.div>
 
         <div className="space-y-4">
           {faqs.map((faq, index) => (
             <motion.div
               key={index}
-              className="bg-white rounded-2xl border border-gray-200 overflow-hidden"
+              className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-200 dark:border-slate-700 overflow-hidden transition-colors duration-200"
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: index * 0.1 }}
               viewport={{ once: true }}
             >
               <button
-                className="w-full px-8 py-6 text-left flex items-center justify-between hover:bg-gray-50 transition-colors"
+                className="w-full px-8 py-6 text-left flex items-center justify-between hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors cursor-pointer"
                 onClick={() => setOpenFAQ(openFAQ === index ? null : index)}
               >
-                <h3 className="text-lg font-semibold text-gray-900 pr-4">{faq.question}</h3>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white pr-4">{faq.question}</h3>
                 {openFAQ === index ? (
-                  <ChevronUp className="w-5 h-5 text-gray-500 flex-shrink-0" />
+                  <ChevronUp className="w-5 h-5 text-gray-500 dark:text-gray-400 flex-shrink-0" />
                 ) : (
-                  <ChevronDown className="w-5 h-5 text-gray-500 flex-shrink-0" />
+                  <ChevronDown className="w-5 h-5 text-gray-500 dark:text-gray-400 flex-shrink-0" />
                 )}
               </button>
               <AnimatePresence>
@@ -1247,7 +1147,7 @@ const FAQSection = () => {
                     transition={{ duration: 0.3 }}
                   >
                     <div className="px-8 pb-6">
-                      <p className="text-gray-600 leading-relaxed">{faq.answer}</p>
+                      <p className="text-gray-600 dark:text-gray-300 leading-relaxed">{faq.answer}</p>
                     </div>
                   </motion.div>
                 )}
@@ -1265,7 +1165,7 @@ const CTASection = () => {
   const navigate = useNavigate()
 
   return (
-    <section className="py-24 bg-gradient-to-r from-purple-600 via-blue-600 to-indigo-600 relative overflow-hidden">
+    <section className="py-24 bg-gradient-to-r from-purple-600 via-blue-600 to-indigo-600 dark:from-purple-950 dark:via-indigo-950 dark:to-slate-950 relative overflow-hidden transition-colors duration-200">
       <div className="absolute inset-0">
         {[...Array(3)].map((_, i) => (
           <motion.div
@@ -1292,7 +1192,7 @@ const CTASection = () => {
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-8">
             <motion.button
-              className="bg-white text-purple-600 px-8 py-4 rounded-xl font-semibold text-lg hover:shadow-2xl transition-all flex items-center group"
+              className="bg-white text-purple-600 px-8 py-4 rounded-xl font-semibold text-lg hover:shadow-2xl transition-all flex items-center group cursor-pointer"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => navigate("/auth")}
@@ -1302,7 +1202,7 @@ const CTASection = () => {
             </motion.button>
 
             <motion.button
-              className="bg-white/20 backdrop-blur-sm text-white px-8 py-4 rounded-xl font-semibold text-lg hover:bg-white/30 transition-all border border-white/30"
+              className="bg-white/20 backdrop-blur-sm text-white px-8 py-4 rounded-xl font-semibold text-lg hover:bg-white/30 transition-all border border-white/30 cursor-pointer"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
             >
@@ -1317,125 +1217,10 @@ const CTASection = () => {
   )
 }
 
-// Footer
-const Footer = () => {
-  return (
-    <footer className="bg-gray-900 text-white py-16">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid md:grid-cols-4 gap-8 mb-8">
-          <div>
-            <div className="flex items-center space-x-2 mb-4">
-              <div className="w-8 h-8 bg-gradient-to-r from-purple-600 to-blue-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-sm">F</span>
-              </div>
-              <span className="text-xl font-bold">FormWise</span>
-            </div>
-            <p className="text-gray-400 mb-4">Create beautiful, intelligent forms that your users will love.</p>
-            <div className="flex space-x-4">{/* Social media icons would go here */}</div>
-          </div>
-
-          <div>
-            <h3 className="font-semibold mb-4">Product</h3>
-            <ul className="space-y-2 text-gray-400">
-              <li>
-                <a href="#" className="hover:text-white transition-colors">
-                  Features
-                </a>
-              </li>
-              <li>
-                <a href="#" className="hover:text-white transition-colors">
-                  Pricing
-                </a>
-              </li>
-              <li>
-                <a href="#" className="hover:text-white transition-colors">
-                  Templates
-                </a>
-              </li>
-              <li>
-                <a href="#" className="hover:text-white transition-colors">
-                  Integrations
-                </a>
-              </li>
-            </ul>
-          </div>
-
-          <div>
-            <h3 className="font-semibold mb-4">Company</h3>
-            <ul className="space-y-2 text-gray-400">
-              <li>
-                <a href="#" className="hover:text-white transition-colors">
-                  About
-                </a>
-              </li>
-              <li>
-                <a href="#" className="hover:text-white transition-colors">
-                  Blog
-                </a>
-              </li>
-              <li>
-                <a href="#" className="hover:text-white transition-colors">
-                  Careers
-                </a>
-              </li>
-              <li>
-                <a href="#" className="hover:text-white transition-colors">
-                  Contact
-                </a>
-              </li>
-            </ul>
-          </div>
-
-          <div>
-            <h3 className="font-semibold mb-4">Support</h3>
-            <ul className="space-y-2 text-gray-400">
-              <li>
-                <a href="#" className="hover:text-white transition-colors">
-                  Help Center
-                </a>
-              </li>
-              <li>
-                <a href="#" className="hover:text-white transition-colors">
-                  Documentation
-                </a>
-              </li>
-              <li>
-                <a href="#" className="hover:text-white transition-colors">
-                  API Reference
-                </a>
-              </li>
-              <li>
-                <a href="#" className="hover:text-white transition-colors">
-                  Status
-                </a>
-              </li>
-            </ul>
-          </div>
-        </div>
-
-        <div className="border-t border-gray-800 pt-8 flex flex-col md:flex-row justify-between items-center">
-          <p className="text-gray-400 text-sm">© 2024 FormWise. All rights reserved.</p>
-          <div className="flex space-x-6 text-sm text-gray-400 mt-4 md:mt-0">
-            <a href="#" className="hover:text-white transition-colors">
-              Privacy Policy
-            </a>
-            <a href="#" className="hover:text-white transition-colors">
-              Terms of Service
-            </a>
-            <a href="#" className="hover:text-white transition-colors">
-              Cookie Policy
-            </a>
-          </div>
-        </div>
-      </div>
-    </footer>
-  )
-}
-
 // Main Landing Page Component
 export default function LandingPage() {
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-gray-50 dark:bg-slate-900 transition-colors duration-200">
        <Helmet>
         <title>FormWise – Build Beautiful Forms Easily</title>
         <meta
@@ -1478,14 +1263,14 @@ export default function LandingPage() {
         </script>
       </Helmet>
 
-      <Header />
+      <PublicHeader />
       <HeroSection />
       <FeaturesSection />
       <PricingSection />
       <TestimonialsSection />
       <FAQSection />
       <CTASection />
-      <Footer />
+      <PublicFooter />
     </div>
   )
 }

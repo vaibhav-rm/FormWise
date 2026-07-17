@@ -288,7 +288,7 @@ export default function Billing() {
                         currentPlan === plan.id
                           ? "border-purple-300 bg-purple-50/50 shadow-sm"
                           : plan.popular
-                            ? "border-purple-200 bg-purple-25/30"
+                            ? "border-purple-200 bg-purple-100/30"
                             : "border-gray-200 hover:border-gray-300"
                       }`}
                       whileHover={{ scale: 1.01 }}

@@ -27,6 +27,18 @@ import {
   Bookmark,
   BookmarkCheck,
   ArrowRight,
+  CheckCircle,
+  Layers,
+  CreditCard,
+  GitBranch,
+  Heart,
+  Scale,
+  Flame,
+  Sparkles,
+  ChevronDown,
+  ChevronUp,
+  AlignLeft,
+  Hash,
 } from "lucide-react"
 import Sidebar from "../components/sidebar"
 import MobileNavigation from "../components/mobile-navigation"
@@ -45,6 +57,11 @@ export default function Templates() {
   const [selectedTemplate, setSelectedTemplate] = useState(null)
   const [showPreview, setShowPreview] = useState(false)
   const [showFilters, setShowFilters] = useState(false)
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false)
+  const [filterPayment, setFilterPayment] = useState(false)
+  const [filterMultiStep, setFilterMultiStep] = useState(false)
+  const [filterLogic, setFilterLogic] = useState(false)
+  const [filterDifficulty, setFilterDifficulty] = useState("all")
 
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 768)
@@ -54,14 +71,15 @@ export default function Templates() {
   }, [])
 
   const categories = [
-    { id: "all", label: "All Templates", icon: <Grid3X3 className="w-4 h-4" />, count: 24 },
-    { id: "contact", label: "Contact Forms", icon: <MessageSquare className="w-4 h-4" />, count: 6 },
-    { id: "survey", label: "Surveys & Feedback", icon: <FileText className="w-4 h-4" />, count: 5 },
-    { id: "event", label: "Events & Registration", icon: <Calendar className="w-4 h-4" />, count: 4 },
-    { id: "business", label: "Business & Marketing", icon: <Briefcase className="w-4 h-4" />, count: 3 },
-    { id: "education", label: "Education & Training", icon: <GraduationCap className="w-4 h-4" />, count: 3 },
-    { id: "ecommerce", label: "E-commerce & Sales", icon: <ShoppingCart className="w-4 h-4" />, count: 3 },
-    { id: "hr", label: "HR & Recruitment", icon: <Users className="w-4 h-4" />, count: 2 },
+    { id: "all", label: "All Templates", icon: <Grid3X3 className="w-4 h-4" />, count: 31 },
+    { id: "contact", label: "Contact", icon: <MessageSquare className="w-4 h-4" />, count: 6 },
+    { id: "survey", label: "Surveys", icon: <FileText className="w-4 h-4" />, count: 5 },
+    { id: "event", label: "Events", icon: <Calendar className="w-4 h-4" />, count: 4 },
+    { id: "business", label: "Business", icon: <Briefcase className="w-4 h-4" />, count: 3 },
+    { id: "education", label: "Education", icon: <GraduationCap className="w-4 h-4" />, count: 3 },
+    { id: "ecommerce", label: "E-commerce", icon: <ShoppingCart className="w-4 h-4" />, count: 6 },
+    { id: "hr", label: "HR & Recruiting", icon: <Users className="w-4 h-4" />, count: 2 },
+    { id: "healthcare", label: "Healthcare", icon: <Heart className="w-4 h-4" />, count: 2 },
   ]
 
   const templates = [
@@ -76,6 +94,7 @@ export default function Templates() {
       rating: 4.9,
       preview: ["Full Name", "Email Address", "Subject", "Message"],
       isPremium: false,
+      isHot: true,
       tags: ["basic", "contact", "simple", "minimal"],
       difficulty: "Beginner",
       estimatedTime: "2 min",
@@ -85,6 +104,14 @@ export default function Templates() {
       multiStep: false,
       hasLogic: false,
       hasPayment: false,
+      templateFields: [
+        { id: "c1", type: "text", label: "Full Name", required: true, placeholder: "Jane Doe" },
+        { id: "c2", type: "email", label: "Email Address", required: true, placeholder: "jane@example.com" },
+        { id: "c3", type: "text", label: "Subject", required: true, placeholder: "How can we help you?" },
+        { id: "c4", type: "textarea", label: "Message", required: true, placeholder: "Write your message here..." },
+      ],
+      submitButtonText: "Send Message",
+      thankYouMessage: "✅ Thank you for reaching out! We'll get back to you within 24 hours.",
     },
     {
       id: "2",
@@ -105,6 +132,18 @@ export default function Templates() {
       multiStep: false,
       hasLogic: true,
       hasPayment: false,
+      templateFields: [
+        { id: "ac1", type: "text", label: "Full Name", required: true, placeholder: "Your full name" },
+        { id: "ac2", type: "email", label: "Email Address", required: true, placeholder: "you@company.com" },
+        { id: "ac3", type: "phone", label: "Phone Number", required: false, placeholder: "+1 555 000 0000" },
+        { id: "ac4", type: "select", label: "Department", required: true, options: ["Sales", "Technical Support", "Billing & Accounts", "General Enquiry", "Partnerships"] },
+        { id: "ac5", type: "radio", label: "Priority Level", required: true, options: ["Low — general question", "Medium — need help soon", "High — urgent issue", "Critical — system down"] },
+        { id: "ac6", type: "text", label: "Subject", required: true, placeholder: "Brief description of your issue" },
+        { id: "ac7", type: "textarea", label: "Detailed Message", required: true, placeholder: "Please describe your issue in detail, including any steps to reproduce or context..." },
+        { id: "ac8", type: "file", label: "Attachments (optional)", required: false, options: [] },
+      ],
+      submitButtonText: "Submit Request",
+      thankYouMessage: "Your request has been received and routed to the right team. Expect a response based on your selected priority level.",
     },
     {
       id: "3",
@@ -116,6 +155,7 @@ export default function Templates() {
       rating: 4.9,
       preview: ["Email", "First Name", "Interests", "Frequency", "Consent"],
       isPremium: false,
+      isHot: true,
       tags: ["newsletter", "subscription", "email", "marketing"],
       difficulty: "Beginner",
       estimatedTime: "3 min",
@@ -125,6 +165,15 @@ export default function Templates() {
       multiStep: false,
       hasLogic: false,
       hasPayment: false,
+      templateFields: [
+        { id: "ns1", type: "text", label: "First Name", required: true, placeholder: "Your first name" },
+        { id: "ns2", type: "email", label: "Email Address", required: true, placeholder: "your@email.com" },
+        { id: "ns3", type: "checkbox", label: "Interests", required: false, options: ["Product Updates", "Industry News", "Tutorials & How-tos", "Promotions & Offers", "Case Studies"] },
+        { id: "ns4", type: "radio", label: "Email Frequency", required: true, options: ["Daily digest", "Weekly roundup", "Monthly newsletter", "Only major announcements"] },
+        { id: "ns5", type: "checkbox", label: "Consent", required: true, options: ["I agree to receive marketing emails and accept the Privacy Policy"] },
+      ],
+      submitButtonText: "Subscribe →",
+      thankYouMessage: "🎉 Welcome aboard! Check your inbox for a confirmation email.",
     },
 
     // Surveys & Feedback
@@ -147,6 +196,19 @@ export default function Templates() {
       multiStep: true,
       hasLogic: true,
       hasPayment: false,
+      templateFields: [
+        { id: "cs1", type: "rating", label: "Overall Satisfaction", required: true },
+        { id: "cs2", type: "rating", label: "Service Quality", required: true },
+        { id: "cs3", type: "rating", label: "Value for Money", required: true },
+        { id: "cs4", type: "rating", label: "Ease of Use / Process", required: true },
+        { id: "cs5", type: "radio", label: "How likely are you to recommend us? (NPS)", required: true, options: ["0 — Not at all", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10 — Extremely likely"] },
+        { id: "cs6", type: "select", label: "How long have you been a customer?", required: false, options: ["Less than 1 month", "1–6 months", "6–12 months", "1–2 years", "Over 2 years"] },
+        { id: "cs7", type: "checkbox", label: "Which aspects did you like most?", required: false, options: ["Customer support", "Product quality", "Pricing", "Speed of delivery", "Website experience", "Communication"] },
+        { id: "cs8", type: "textarea", label: "What could we improve?", required: false, placeholder: "Your feedback helps us get better..." },
+        { id: "cs9", type: "textarea", label: "Any other comments or testimonial?", required: false, placeholder: "Feel free to share a testimonial we can use on our website!" },
+      ],
+      submitButtonText: "Submit Feedback",
+      thankYouMessage: "Thank you for your valuable feedback! It helps us improve every day.",
     },
     {
       id: "5",
@@ -167,6 +229,18 @@ export default function Templates() {
       multiStep: false,
       hasLogic: true,
       hasPayment: false,
+      templateFields: [
+        { id: "pf1", type: "text", label: "Product / Feature Name", required: true, placeholder: "Which product are you reviewing?" },
+        { id: "pf2", type: "rating", label: "Overall Product Rating", required: true },
+        { id: "pf3", type: "select", label: "How often do you use this product?", required: true, options: ["Daily", "Several times a week", "Weekly", "Monthly", "Rarely"] },
+        { id: "pf4", type: "checkbox", label: "What features do you love most?", required: false, options: ["Performance", "Design & UI", "Reliability", "Integrations", "Customer support", "Pricing", "Documentation"] },
+        { id: "pf5", type: "checkbox", label: "What features are missing?", required: false, options: ["Mobile app", "API access", "Advanced reporting", "Team collaboration", "Custom branding", "Offline mode"] },
+        { id: "pf6", type: "textarea", label: "What problem does this product solve for you?", required: false, placeholder: "Describe how this product helps you..." },
+        { id: "pf7", type: "radio", label: "Would you recommend this product?", required: true, options: ["Definitely yes", "Probably yes", "Not sure", "Probably not", "Definitely not"] },
+        { id: "pf8", type: "textarea", label: "Your Testimonial (optional)", required: false, placeholder: "Share a quote we can use on our website..." },
+      ],
+      submitButtonText: "Submit Feedback",
+      thankYouMessage: "Thank you for your product feedback! Your insights directly shape our roadmap.",
     },
     {
       id: "6",
@@ -357,29 +431,129 @@ export default function Templates() {
       hasPayment: true,
     },
 
-    // E-commerce
+    // E-commerce & Order Forms
     {
       id: "15",
-      title: "Order Form",
-      description: "Professional order form with product selection and payment",
+      title: "Product Order Form",
+      description: "Complete multi-step product order form with catalog, quantities, shipping, and payment collection",
       category: "ecommerce",
-      fields: 12,
-      uses: 16800,
-      rating: 4.8,
-      preview: ["Product Selection", "Quantity", "Shipping Info", "Payment"],
+      fields: 16,
+      uses: 24600,
+      rating: 4.9,
+      preview: ["Product Selection", "Quantity & Variants", "Shipping Address", "Payment Details"],
       isPremium: true,
-      tags: ["ecommerce", "order", "payment", "shipping"],
+      tags: ["ecommerce", "order", "payment", "shipping", "product", "catalog"],
       difficulty: "Advanced",
       estimatedTime: "10 min",
-      features: ["Product catalog", "Inventory tracking", "Shipping calculator", "Payment gateway"],
-      industry: ["E-commerce", "Retail", "B2B"],
+      features: ["Product catalog", "Variant selection", "Shipping calculator", "Payment gateway", "Order confirmation", "Stock tracking"],
+      industry: ["E-commerce", "Retail", "D2C", "Marketplace"],
       responsive: true,
       multiStep: true,
       hasLogic: true,
       hasPayment: true,
+      templateFields: [
+        { id: "f1", type: "text", label: "Full Name", required: true, placeholder: "John Doe" },
+        { id: "f2", type: "email", label: "Email Address", required: true, placeholder: "john@example.com" },
+        { id: "f3", type: "phone", label: "Phone Number", required: true, placeholder: "+91 9999999999" },
+        { id: "f4", type: "select", label: "Product Category", required: true, options: ["Electronics", "Clothing & Apparel", "Home & Garden", "Sports & Fitness", "Books & Stationery", "Health & Beauty"] },
+        { id: "f5", type: "text", label: "Product Name / SKU", required: true, placeholder: "e.g. Premium Wireless Headphones XZ-900" },
+        { id: "f6", type: "radio", label: "Size / Variant", required: false, options: ["Small", "Medium", "Large", "XL", "One Size / Not Applicable"] },
+        { id: "f7", type: "select", label: "Color / Finish", required: false, options: ["Black", "White", "Silver", "Gold", "Rose Gold", "Other"] },
+        { id: "f8", type: "number", label: "Quantity", required: true, placeholder: "1" },
+        { id: "f9", type: "select", label: "Shipping Method", required: true, options: ["Standard (5-7 days) - Free", "Express (2-3 days) - ₹99", "Overnight (Next Day) - ₹299", "Click & Collect - Free"] },
+        { id: "f10", type: "textarea", label: "Delivery Address", required: true, placeholder: "House/Flat No., Street, Area..." },
+        { id: "f11", type: "text", label: "City", required: true, placeholder: "Mumbai" },
+        { id: "f12", type: "text", label: "State / Province", required: true, placeholder: "Maharashtra" },
+        { id: "f13", type: "text", label: "PIN / ZIP Code", required: true, placeholder: "400001" },
+        { id: "f14", type: "radio", label: "Payment Method", required: true, options: ["UPI / GPay / PhonePe", "Debit / Credit Card", "Net Banking", "Cash on Delivery", "EMI (0% interest)"] },
+        { id: "f15", type: "textarea", label: "Special Instructions", required: false, placeholder: "Gift wrapping, engraving, delivery timing preferences..." },
+        { id: "f16", type: "checkbox", label: "Consent & Policies", required: true, options: ["I agree to the Terms & Conditions", "I confirm my order details are correct", "Subscribe me to order updates via SMS/Email"] },
+      ],
+      submitButtonText: "Place Order →",
+      thankYouMessage: "🎉 Your order has been placed successfully! You will receive a confirmation email shortly with your order ID and tracking details.",
     },
     {
       id: "16",
+      title: "Service Order Form",
+      description: "Professional service request & booking form for freelancers, agencies, and service businesses",
+      category: "ecommerce",
+      fields: 14,
+      uses: 18200,
+      rating: 4.8,
+      preview: ["Service Selection", "Project Brief", "Timeline & Budget", "Contact & Payment"],
+      isPremium: false,
+      tags: ["service", "order", "booking", "freelance", "agency", "request"],
+      difficulty: "Intermediate",
+      estimatedTime: "7 min",
+      features: ["Service catalog", "Project briefing", "Budget estimation", "Timeline selection", "File attachment", "Auto-quote"],
+      industry: ["Agency", "Freelance", "Consulting", "Design", "Development", "Marketing"],
+      responsive: true,
+      multiStep: true,
+      hasLogic: true,
+      hasPayment: false,
+      templateFields: [
+        { id: "s1", type: "text", label: "Your Name / Company", required: true, placeholder: "Acme Corp or Jane Doe" },
+        { id: "s2", type: "email", label: "Business Email", required: true, placeholder: "hello@company.com" },
+        { id: "s3", type: "phone", label: "Contact Number", required: false, placeholder: "+91 9000000000" },
+        { id: "s4", type: "select", label: "Service Required", required: true, options: ["Website Design & Development", "Mobile App Development", "Graphic Design & Branding", "SEO & Digital Marketing", "Content Writing & Copywriting", "Video Production & Editing", "Data Analysis & Reporting", "Custom Software Solution"] },
+        { id: "s5", type: "checkbox", label: "Specific Deliverables", required: false, options: ["Landing Page", "Full Website", "Logo & Brand Kit", "Social Media Assets", "Marketing Copy", "SEO Audit Report", "Analytics Dashboard", "API Integration"] },
+        { id: "s6", type: "textarea", label: "Project Description", required: true, placeholder: "Tell us about your project goals, target audience, and key requirements..." },
+        { id: "s7", type: "select", label: "Project Timeline", required: true, options: ["ASAP (Rush — premium pricing applies)", "Within 1 week", "2–4 weeks", "1–2 months", "3–6 months", "Flexible / Ongoing"] },
+        { id: "s8", type: "select", label: "Budget Range", required: true, options: ["Under ₹10,000", "₹10,000 – ₹50,000", "₹50,000 – ₹1,00,000", "₹1,00,000 – ₹5,00,000", "₹5,00,000+", "Let's discuss"] },
+        { id: "s9", type: "radio", label: "How Did You Hear About Us?", required: false, options: ["Google Search", "Social Media", "Referral from a friend", "LinkedIn", "Previous client", "Other"] },
+        { id: "s10", type: "url", label: "Your Website / Portfolio (optional)", required: false, placeholder: "https://yourwebsite.com" },
+        { id: "s11", type: "file", label: "Attach Reference Files / Brief", required: false, options: [] },
+        { id: "s12", type: "select", label: "Preferred Communication", required: true, options: ["Email", "WhatsApp", "Phone Call", "Video Call (Zoom/Meet)", "Slack"] },
+        { id: "s13", type: "radio", label: "Engagement Type", required: true, options: ["One-time project", "Monthly retainer", "Hourly / ad-hoc", "Ongoing partnership"] },
+        { id: "s14", type: "checkbox", label: "Agreements", required: true, options: ["I understand a discovery call may be needed before a quote", "I agree to the service terms and privacy policy"] },
+      ],
+      submitButtonText: "Request a Quote →",
+      thankYouMessage: "✅ Thanks for your service request! Our team will review your brief and get back to you within 24 business hours with a detailed proposal.",
+    },
+    {
+      id: "17",
+      title: "B2B Purchase Order Form",
+      description: "Enterprise-grade purchase order form for bulk procurement, vendor management, and corporate purchasing",
+      category: "ecommerce",
+      fields: 18,
+      uses: 11400,
+      rating: 4.7,
+      preview: ["Company Details", "Order Line Items", "Delivery Terms", "Approval & Authorization"],
+      isPremium: true,
+      tags: ["b2b", "purchase order", "procurement", "enterprise", "bulk", "corporate", "vendor"],
+      difficulty: "Advanced",
+      estimatedTime: "15 min",
+      features: ["Line item ordering", "Tax & GST handling", "Vendor selection", "Approval workflow", "PO number generation", "Multi-signatory"],
+      industry: ["Enterprise", "Manufacturing", "Wholesale", "Government", "Healthcare", "Education"],
+      responsive: true,
+      multiStep: true,
+      hasLogic: true,
+      hasPayment: false,
+      templateFields: [
+        { id: "b1", type: "text", label: "Company / Organization Name", required: true, placeholder: "Acme Industries Pvt. Ltd." },
+        { id: "b2", type: "text", label: "Purchase Order Number (PO #)", required: true, placeholder: "PO-2026-00123" },
+        { id: "b3", type: "date", label: "Order Date", required: true },
+        { id: "b4", type: "date", label: "Required Delivery Date", required: true },
+        { id: "b5", type: "text", label: "Authorized Buyer Name", required: true, placeholder: "Full name of the person raising this PO" },
+        { id: "b6", type: "text", label: "Buyer Designation", required: true, placeholder: "e.g. Purchase Manager" },
+        { id: "b7", type: "email", label: "Buyer Email", required: true, placeholder: "buyer@company.com" },
+        { id: "b8", type: "phone", label: "Buyer Phone", required: true, placeholder: "+91 9000000000" },
+        { id: "b9", type: "text", label: "Vendor / Supplier Name", required: true, placeholder: "Supplier Company Ltd." },
+        { id: "b10", type: "text", label: "GST Number (GSTIN)", required: false, placeholder: "22AAAAA0000A1Z5" },
+        { id: "b11", type: "textarea", label: "Item 1: Description, Quantity & Unit Price", required: true, placeholder: "e.g. Laptop HP EliteBook 840 G9 × 10 units @ ₹85,000 each" },
+        { id: "b12", type: "textarea", label: "Item 2: Description, Quantity & Unit Price (if applicable)", required: false, placeholder: "e.g. USB-C Docking Station × 10 units @ ₹4,500 each" },
+        { id: "b13", type: "textarea", label: "Item 3: Description, Quantity & Unit Price (if applicable)", required: false, placeholder: "Add more line items as needed" },
+        { id: "b14", type: "select", label: "Tax / GST Applicable", required: true, options: ["GST @ 5%", "GST @ 12%", "GST @ 18%", "GST @ 28%", "Tax Exempt / Zero Rated", "Outside Tax Jurisdiction"] },
+        { id: "b15", type: "select", label: "Payment Terms", required: true, options: ["100% Advance", "50% Advance, 50% on Delivery", "Net 30 Days", "Net 60 Days", "Net 90 Days", "Letter of Credit (LC)"] },
+        { id: "b16", type: "textarea", label: "Shipping / Delivery Address", required: true, placeholder: "Complete delivery address including landmark and PIN code" },
+        { id: "b17", type: "select", label: "Freight Terms", required: true, options: ["FOB - Buyer's Warehouse", "CIF - Seller Bears Freight", "Ex-Works (EXW)", "Delivered Duty Paid (DDP)"] },
+        { id: "b18", type: "textarea", label: "Special Terms, Conditions & Notes", required: false, placeholder: "Any warranties, certifications required, packaging specs, or special handling instructions..." },
+      ],
+      submitButtonText: "Submit Purchase Order →",
+      thankYouMessage: "📋 Your Purchase Order has been submitted successfully. A copy will be emailed to the buyer and vendor. The vendor will confirm receipt within 1 business day.",
+    },
+    {
+      id: "18",
       title: "Return Request Form",
       description: "Customer return and refund request form",
       category: "ecommerce",
@@ -397,11 +571,108 @@ export default function Templates() {
       multiStep: false,
       hasLogic: true,
       hasPayment: false,
+      templateFields: [
+        { id: "r1", type: "text", label: "Order ID", required: true, placeholder: "e.g. ORD-20260001" },
+        { id: "r2", type: "text", label: "Full Name", required: true, placeholder: "Name as per order" },
+        { id: "r3", type: "email", label: "Email Address", required: true, placeholder: "email used during purchase" },
+        { id: "r4", type: "text", label: "Product Name", required: true, placeholder: "Name of the item to return" },
+        { id: "r5", type: "number", label: "Quantity to Return", required: true, placeholder: "1" },
+        { id: "r6", type: "select", label: "Reason for Return", required: true, options: ["Damaged / Defective item", "Wrong item received", "Item not as described", "Changed my mind", "Duplicate order", "Quality not satisfactory"] },
+        { id: "r7", type: "radio", label: "Item Condition", required: true, options: ["Unopened / Unused", "Opened but unused", "Used - like new", "Damaged on arrival"] },
+        { id: "r8", type: "radio", label: "Preferred Resolution", required: true, options: ["Full Refund to original payment method", "Store Credit / Wallet", "Exchange for same item", "Exchange for different item"] },
+        { id: "r9", type: "image", label: "Upload Product Photo (optional)", required: false, options: [] },
+        { id: "r10", type: "textarea", label: "Additional Comments", required: false, placeholder: "Any additional information about your return..." },
+      ],
+      submitButtonText: "Submit Return Request",
+      thankYouMessage: "Your return request has been received. We will process it within 2-3 business days and send you a return shipping label via email.",
+    },
+
+    // Healthcare
+    {
+      id: "19",
+      title: "Patient Intake Form",
+      description: "Comprehensive new patient registration and medical history form for clinics and hospitals",
+      category: "healthcare",
+      fields: 20,
+      uses: 13400,
+      rating: 4.8,
+      preview: ["Personal Info", "Medical History", "Current Medications", "Insurance Details"],
+      isPremium: true,
+      isNew: true,
+      tags: ["healthcare", "medical", "patient", "intake", "clinic", "hospital"],
+      difficulty: "Intermediate",
+      estimatedTime: "10 min",
+      features: ["HIPAA-ready structure", "Medical history", "Medication list", "Insurance capture", "Emergency contacts", "Consent forms"],
+      industry: ["Healthcare", "Clinic", "Hospital", "Dental", "Telemedicine"],
+      responsive: true,
+      multiStep: true,
+      hasLogic: true,
+      hasPayment: false,
+      templateFields: [
+        { id: "pi1", type: "text", label: "Patient Full Name", required: true, placeholder: "First and Last Name" },
+        { id: "pi2", type: "date", label: "Date of Birth", required: true },
+        { id: "pi3", type: "radio", label: "Gender", required: true, options: ["Male", "Female", "Non-binary", "Prefer not to say"] },
+        { id: "pi4", type: "text", label: "Patient ID / Aadhaar Number", required: false, placeholder: "Government ID for records" },
+        { id: "pi5", type: "phone", label: "Contact Number", required: true, placeholder: "+91 9000000000" },
+        { id: "pi6", type: "email", label: "Email Address", required: false, placeholder: "patient@email.com" },
+        { id: "pi7", type: "textarea", label: "Home Address", required: true, placeholder: "Full residential address" },
+        { id: "pi8", type: "text", label: "Emergency Contact Name", required: true, placeholder: "Name of emergency contact" },
+        { id: "pi9", type: "phone", label: "Emergency Contact Phone", required: true, placeholder: "+91 9000000000" },
+        { id: "pi10", type: "text", label: "Relationship to Patient", required: true, placeholder: "e.g. Spouse, Parent, Sibling" },
+        { id: "pi11", type: "select", label: "Blood Group", required: false, options: ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-", "Unknown"] },
+        { id: "pi12", type: "checkbox", label: "Known Allergies", required: false, options: ["Penicillin", "Sulfa drugs", "Aspirin", "Latex", "Peanuts", "Shellfish", "No known allergies"] },
+        { id: "pi13", type: "checkbox", label: "Existing Medical Conditions", required: false, options: ["Diabetes", "Hypertension", "Asthma", "Heart disease", "Thyroid disorder", "Kidney disease", "Cancer (current/past)", "None"] },
+        { id: "pi14", type: "textarea", label: "Current Medications", required: false, placeholder: "List all medications with dosage and frequency..." },
+        { id: "pi15", type: "textarea", label: "Past Surgeries / Hospitalizations", required: false, placeholder: "Describe any previous surgeries or major hospitalizations..." },
+        { id: "pi16", type: "select", label: "Primary Insurance Provider", required: false, options: ["Star Health", "HDFC ERGO", "Niva Bupa", "Care Health", "Bajaj Allianz", "ICICI Lombard", "Government / CGHS", "Self-pay (no insurance)"] },
+        { id: "pi17", type: "text", label: "Insurance Policy Number", required: false, placeholder: "Policy / Member ID" },
+        { id: "pi18", type: "textarea", label: "Reason for Visit / Chief Complaint", required: true, placeholder: "What brings you in today?" },
+        { id: "pi19", type: "radio", label: "Have you visited this clinic before?", required: true, options: ["Yes — returning patient", "No — new patient"] },
+        { id: "pi20", type: "checkbox", label: "Consent", required: true, options: ["I consent to examination and treatment", "I authorize sharing of medical records as needed", "I have read and accept the Privacy Policy"] },
+      ],
+      submitButtonText: "Complete Registration",
+      thankYouMessage: "Thank you for completing your intake form. Our staff will review your information before your appointment. Please arrive 10 minutes early.",
+    },
+    {
+      id: "20",
+      title: "Appointment Booking Form",
+      description: "Simple and fast appointment scheduling form for clinics, doctors, and wellness centers",
+      category: "healthcare",
+      fields: 10,
+      uses: 9800,
+      rating: 4.7,
+      preview: ["Patient Name", "Doctor / Department", "Preferred Date & Time", "Reason for Visit"],
+      isPremium: false,
+      isNew: true,
+      tags: ["appointment", "booking", "healthcare", "doctor", "clinic", "schedule"],
+      difficulty: "Beginner",
+      estimatedTime: "4 min",
+      features: ["Date & time picker", "Department selection", "Doctor preference", "SMS confirmation", "Reschedule support"],
+      industry: ["Healthcare", "Dental", "Wellness", "Physiotherapy", "Mental Health"],
+      responsive: true,
+      multiStep: false,
+      hasLogic: false,
+      hasPayment: false,
+      templateFields: [
+        { id: "ab1", type: "text", label: "Patient Full Name", required: true, placeholder: "Your full name" },
+        { id: "ab2", type: "phone", label: "Mobile Number", required: true, placeholder: "+91 9000000000" },
+        { id: "ab3", type: "email", label: "Email Address", required: false, placeholder: "optional, for email confirmation" },
+        { id: "ab4", type: "select", label: "Department / Specialty", required: true, options: ["General Medicine", "Cardiology", "Dermatology", "Orthopedics", "Pediatrics", "Gynecology", "Neurology", "ENT", "Ophthalmology", "Psychiatry", "Dental"] },
+        { id: "ab5", type: "text", label: "Preferred Doctor (optional)", required: false, placeholder: "Dr. Name or leave blank for next available" },
+        { id: "ab6", type: "date", label: "Preferred Appointment Date", required: true },
+        { id: "ab7", type: "radio", label: "Preferred Time Slot", required: true, options: ["Morning (9am – 12pm)", "Afternoon (12pm – 4pm)", "Evening (4pm – 7pm)", "Any available"] },
+        { id: "ab8", type: "radio", label: "Appointment Type", required: true, options: ["In-person consultation", "Video / Teleconsultation", "Home visit (if available)"] },
+        { id: "ab9", type: "textarea", label: "Brief Reason for Visit", required: true, placeholder: "Describe your symptoms or reason for the appointment..." },
+        { id: "ab10", type: "radio", label: "Are you a new or returning patient?", required: true, options: ["New patient", "Returning patient"] },
+      ],
+      submitButtonText: "Book Appointment",
+      thankYouMessage: "🗓️ Your appointment request has been received! We will confirm your slot via SMS/WhatsApp within 2 hours.",
     },
   ]
 
   const featuredTemplates = templates.filter((t) => t.uses > 15000).slice(0, 3)
   const trendingTemplates = templates.filter((t) => t.rating >= 4.8).slice(0, 4)
+  const newTemplates = templates.filter((t) => t.isNew)
 
   const filteredTemplates = templates
     .filter((template) => {
@@ -411,8 +682,12 @@ export default function Templates() {
         template.tags.some((tag) => tag.toLowerCase().includes(searchTerm.toLowerCase()))
 
       const matchesCategory = selectedCategory === "all" || template.category === selectedCategory
+      const matchesPayment = !filterPayment || template.hasPayment
+      const matchesMultiStep = !filterMultiStep || template.multiStep
+      const matchesLogic = !filterLogic || template.hasLogic
+      const matchesDifficulty = filterDifficulty === "all" || template.difficulty === filterDifficulty
 
-      return matchesSearch && matchesCategory
+      return matchesSearch && matchesCategory && matchesPayment && matchesMultiStep && matchesLogic && matchesDifficulty
     })
     .sort((a, b) => {
       switch (sortBy) {
@@ -441,18 +716,28 @@ export default function Templates() {
 
   const handleUseTemplate = async (template) => {
     try {
-      // Create a new form based on the template
+      // Build real fields from templateFields definitions, or fall back to empty
+      const fields = (template.templateFields || []).map((f) => ({
+        id: `field_${Date.now()}_${f.id}`,
+        type: f.type,
+        label: f.label,
+        required: f.required ?? false,
+        placeholder: f.placeholder || "",
+        options: f.options || [],
+        description: f.description || "",
+      }))
+
       const formData = {
         title: template.title,
         description: template.description,
-        fields: [], // Would populate with actual template fields
+        fields,
         settings: {
           theme: "modern",
           backgroundColor: "#ffffff",
           textColor: "#1f2937",
-          submitButtonText: "Submit",
-          thankYouMessage: "Thank you for your submission!",
-          collectEmail: false,
+          submitButtonText: template.submitButtonText || "Submit",
+          thankYouMessage: template.thankYouMessage || "Thank you for your submission!",
+          collectEmail: true,
           allowMultipleSubmissions: true,
         },
         status: "draft",
@@ -491,8 +776,20 @@ export default function Templates() {
       animate={{ opacity: 1, y: 0 }}
       whileHover={{ y: -5 }}
     >
-      {/* Header with Premium Badge */}
+      {/* Header with Badges */}
       <div className="relative">
+        <div className="absolute top-2 right-2 flex gap-1 z-10">
+          {template.isNew && (
+            <span className="flex items-center gap-1 bg-emerald-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
+              <Sparkles className="w-2.5 h-2.5" /> New
+            </span>
+          )}
+          {template.isHot && (
+            <span className="flex items-center gap-1 bg-orange-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
+              <Flame className="w-2.5 h-2.5" /> Hot
+            </span>
+          )}
+        </div>
         {template.isPremium && (
           <div className="absolute top-0 left-0 right-0 bg-gradient-to-r from-purple-600 to-blue-600 text-white text-xs font-medium px-3 py-2 flex items-center justify-center">
             <Zap className="w-3 h-3 mr-1" />
@@ -514,9 +811,9 @@ export default function Templates() {
             </span>
           </div>
           <div className="flex items-center space-x-2">
-            {template.hasPayment && <span className="text-green-600">💳</span>}
-            {template.multiStep && <span className="text-blue-600">📋</span>}
-            {template.hasLogic && <span className="text-purple-600">🔀</span>}
+            {template.hasPayment && <span title="Payment" className="text-green-600"><CreditCard className="w-3 h-3" /></span>}
+            {template.multiStep && <span title="Multi-step" className="text-blue-600"><Layers className="w-3 h-3" /></span>}
+            {template.hasLogic && <span title="Conditional logic" className="text-purple-600"><GitBranch className="w-3 h-3" /></span>}
           </div>
         </div>
       </div>
@@ -824,7 +1121,7 @@ export default function Templates() {
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 sm:w-5 sm:h-5" />
                   <input
                     type="text"
-                    placeholder="Search templates..."
+                    placeholder="Search templates by name, tag, or industry..."
                     className="w-full pl-8 sm:pl-10 pr-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm sm:text-base"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
@@ -832,8 +1129,8 @@ export default function Templates() {
                 </div>
               </div>
 
-              {/* Sort and Filters */}
-              <div className="flex items-center space-x-4">
+              {/* Sort and Advanced Filter Toggle */}
+              <div className="flex items-center gap-2">
                 <select
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value)}
@@ -844,20 +1141,89 @@ export default function Templates() {
                   <option value="newest">Newest</option>
                   <option value="name">Name A-Z</option>
                 </select>
-
-                {isMobile && (
-                  <button
-                    onClick={() => setShowFilters(!showFilters)}
-                    className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50"
-                  >
-                    <Filter className="w-4 h-4" />
-                  </button>
-                )}
+                <button
+                  onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
+                  className={`flex items-center gap-1.5 px-3 py-2 border rounded-lg text-sm font-medium transition-colors ${
+                    showAdvancedFilters || filterPayment || filterMultiStep || filterLogic || filterDifficulty !== "all"
+                      ? "border-purple-500 bg-purple-50 text-purple-700"
+                      : "border-gray-300 text-gray-600 hover:bg-gray-50"
+                  }`}
+                >
+                  <Filter className="w-4 h-4" />
+                  Filters
+                  {(filterPayment || filterMultiStep || filterLogic || filterDifficulty !== "all") && (
+                    <span className="bg-purple-600 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
+                      {[filterPayment, filterMultiStep, filterLogic, filterDifficulty !== "all"].filter(Boolean).length}
+                    </span>
+                  )}
+                  {showAdvancedFilters ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                </button>
               </div>
             </div>
 
+            {/* Advanced Filters Panel */}
+            <AnimatePresence>
+              {showAdvancedFilters && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: "auto", opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  className="overflow-hidden"
+                >
+                  <div className="mt-4 pt-4 border-t border-gray-100">
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Advanced Filters</p>
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        onClick={() => setFilterPayment(!filterPayment)}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${
+                          filterPayment ? "bg-green-600 text-white border-green-600" : "border-gray-300 text-gray-600 hover:border-green-400"
+                        }`}
+                      >
+                        <CreditCard className="w-3 h-3" /> Has Payment
+                      </button>
+                      <button
+                        onClick={() => setFilterMultiStep(!filterMultiStep)}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${
+                          filterMultiStep ? "bg-blue-600 text-white border-blue-600" : "border-gray-300 text-gray-600 hover:border-blue-400"
+                        }`}
+                      >
+                        <Layers className="w-3 h-3" /> Multi-step
+                      </button>
+                      <button
+                        onClick={() => setFilterLogic(!filterLogic)}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${
+                          filterLogic ? "bg-purple-600 text-white border-purple-600" : "border-gray-300 text-gray-600 hover:border-purple-400"
+                        }`}
+                      >
+                        <GitBranch className="w-3 h-3" /> Conditional Logic
+                      </button>
+                      {["Beginner", "Intermediate", "Advanced"].map((d) => (
+                        <button
+                          key={d}
+                          onClick={() => setFilterDifficulty(filterDifficulty === d ? "all" : d)}
+                          className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${
+                            filterDifficulty === d ? getDifficultyColor(d) + " border-transparent" : "border-gray-300 text-gray-600 hover:border-gray-400"
+                          }`}
+                        >
+                          {d}
+                        </button>
+                      ))}
+                      {(filterPayment || filterMultiStep || filterLogic || filterDifficulty !== "all") && (
+                        <button
+                          onClick={() => { setFilterPayment(false); setFilterMultiStep(false); setFilterLogic(false); setFilterDifficulty("all") }}
+                          className="flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium text-red-600 border border-red-200 hover:bg-red-50 transition-all"
+                        >
+                          <X className="w-3 h-3" /> Clear
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
             {/* Categories */}
-            <div className={`mt-6 ${isMobile && !showFilters ? "hidden" : ""}`}>
+            <div className={`mt-4 ${isMobile && !showFilters ? "" : ""}`}>
               <div className="flex flex-wrap gap-2">
                 {categories.map((category) => (
                   <button
@@ -865,7 +1231,7 @@ export default function Templates() {
                     onClick={() => setSelectedCategory(category.id)}
                     className={`flex items-center space-x-1 sm:space-x-2 px-3 sm:px-4 py-2 rounded-lg font-medium transition-all text-xs sm:text-sm ${
                       selectedCategory === category.id
-                        ? "bg-gradient-to-r from-purple-600 to-blue-600 text-white"
+                        ? "bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-md"
                         : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                     }`}
                   >
@@ -918,90 +1284,163 @@ export default function Templates() {
       <AnimatePresence>
         {showPreview && selectedTemplate && (
           <motion.div
-            className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={() => setShowPreview(false)}
           >
             <motion.div
-              className="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-white rounded-2xl max-w-3xl w-full max-h-[92vh] overflow-hidden flex flex-col shadow-2xl"
+              initial={{ scale: 0.92, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.92, opacity: 0, y: 20 }}
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-xl font-semibold text-gray-900">{selectedTemplate.title}</h2>
-                  <button onClick={() => setShowPreview(false)} className="p-2 hover:bg-gray-100 rounded-lg">
-                    <X className="w-5 h-5" />
-                  </button>
-                </div>
-
-                <div className="space-y-4">
-                  <p className="text-gray-600">{selectedTemplate.description}</p>
-
-                  <div className="grid grid-cols-2 gap-4 text-sm">
-                    <div>
-                      <span className="font-medium text-gray-700">Fields:</span> {selectedTemplate.fields}
-                    </div>
-                    <div>
-                      <span className="font-medium text-gray-700">Difficulty:</span> {selectedTemplate.difficulty}
-                    </div>
-                    <div>
-                      <span className="font-medium text-gray-700">Time:</span> {selectedTemplate.estimatedTime}
-                    </div>
-                    <div>
-                      <span className="font-medium text-gray-700">Rating:</span> {selectedTemplate.rating}/5
-                    </div>
+              {/* Modal Header */}
+              <div className="flex items-center justify-between p-6 border-b border-gray-100 flex-shrink-0">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-blue-500 rounded-xl flex items-center justify-center">
+                    <FileText className="w-5 h-5 text-white" />
                   </div>
-
                   <div>
-                    <h3 className="font-medium text-gray-700 mb-2">Features:</h3>
-                    <div className="flex flex-wrap gap-2">
-                      {selectedTemplate.features.map((feature, index) => (
-                        <span key={index} className="bg-blue-50 text-blue-700 px-2 py-1 rounded text-sm">
-                          {feature}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div>
-                    <h3 className="font-medium text-gray-700 mb-2">Form Fields Preview:</h3>
-                    <div className="space-y-2">
-                      {selectedTemplate.preview.map((field, index) => (
-                        <div key={index} className="border border-gray-200 rounded-lg p-3 bg-gray-50">
-                          <div className="text-sm font-medium text-gray-700">{field}</div>
-                          <div className="mt-1 h-8 bg-white border border-gray-200 rounded"></div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="flex space-x-3 pt-4">
-                    <button
-                      onClick={() => {
-                        handleUseTemplate(selectedTemplate)
-                        setShowPreview(false)
-                      }}
-                      className="flex-1 bg-gradient-to-r from-purple-600 to-blue-600 text-white py-3 rounded-lg font-medium hover:shadow-lg transition-all"
-                    >
-                      Use This Template
-                    </button>
-                    <button
-                      onClick={() => toggleFavorite(selectedTemplate.id)}
-                      className="p-3 border border-gray-300 rounded-lg hover:bg-gray-50"
-                    >
-                      {favorites.has(selectedTemplate.id) ? (
-                        <BookmarkCheck className="w-5 h-5 text-red-500" />
-                      ) : (
-                        <Bookmark className="w-5 h-5" />
-                      )}
-                    </button>
+                    <h2 className="text-xl font-bold text-gray-900">{selectedTemplate.title}</h2>
+                    <p className="text-sm text-gray-500">{selectedTemplate.category} · {selectedTemplate.fields} fields</p>
                   </div>
                 </div>
+                <button onClick={() => setShowPreview(false)} className="p-2 hover:bg-gray-100 rounded-xl transition-colors">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Stats Bar */}
+              <div className="flex items-center gap-6 px-6 py-3 bg-gray-50 border-b border-gray-100 text-sm flex-shrink-0">
+                <span className="flex items-center gap-1.5 text-gray-600">
+                  <Star className="w-4 h-4 text-yellow-400 fill-current" />
+                  <strong>{selectedTemplate.rating}</strong>/5
+                </span>
+                <span className="flex items-center gap-1.5 text-gray-600">
+                  <Users className="w-4 h-4 text-blue-500" />
+                  {selectedTemplate.uses.toLocaleString()} uses
+                </span>
+                <span className="flex items-center gap-1.5 text-gray-600">
+                  <Clock className="w-4 h-4 text-purple-500" />
+                  {selectedTemplate.estimatedTime}
+                </span>
+                <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${getDifficultyColor(selectedTemplate.difficulty)}`}>
+                  {selectedTemplate.difficulty}
+                </span>
+                {selectedTemplate.hasPayment && <span className="flex items-center gap-1 text-green-600 text-xs font-medium"><CreditCard className="w-3 h-3" /> Payment</span>}
+                {selectedTemplate.multiStep && <span className="flex items-center gap-1 text-blue-600 text-xs font-medium"><Layers className="w-3 h-3" /> Multi-step</span>}
+                {selectedTemplate.hasLogic && <span className="flex items-center gap-1 text-purple-600 text-xs font-medium"><GitBranch className="w-3 h-3" /> Logic</span>}
+              </div>
+
+              {/* Scrollable content */}
+              <div className="overflow-y-auto flex-1 p-6">
+                <p className="text-gray-600 mb-5">{selectedTemplate.description}</p>
+
+                {/* Features */}
+                <div className="mb-5">
+                  <h3 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1.5"><CheckCircle className="w-4 h-4 text-green-500" /> Key Features</h3>
+                  <div className="flex flex-wrap gap-1.5">
+                    {selectedTemplate.features.map((f, i) => (
+                      <span key={i} className="bg-blue-50 text-blue-700 px-2.5 py-1 rounded-full text-xs font-medium">{f}</span>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Live Form Preview */}
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-1.5">
+                    <Eye className="w-4 h-4 text-purple-500" />
+                    Live Form Preview
+                    <span className="text-xs font-normal text-gray-400 ml-1">({selectedTemplate.templateFields?.length || selectedTemplate.preview.length} fields)</span>
+                  </h3>
+                  <div className="bg-gray-50 rounded-xl p-4 border border-gray-200 space-y-4">
+                    {selectedTemplate.templateFields ? selectedTemplate.templateFields.slice(0, 8).map((field) => (
+                      <div key={field.id}>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          {field.label}
+                          {field.required && <span className="text-red-500 ml-0.5">*</span>}
+                        </label>
+                        {(field.type === "text" || field.type === "email" || field.type === "phone" || field.type === "url" || field.type === "number") && (
+                          <div className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm text-gray-400 pointer-events-none">
+                            {field.placeholder || `Enter ${field.label.toLowerCase()}...`}
+                          </div>
+                        )}
+                        {field.type === "textarea" && (
+                          <div className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm text-gray-400 pointer-events-none h-16">
+                            {field.placeholder || "Type your response here..."}
+                          </div>
+                        )}
+                        {field.type === "date" && (
+                          <div className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm text-gray-400 pointer-events-none">
+                            📅 Select a date
+                          </div>
+                        )}
+                        {field.type === "select" && (
+                          <div className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm text-gray-400 pointer-events-none flex items-center justify-between">
+                            <span>{field.options?.[0] || "Select an option"}</span>
+                            <ChevronDown className="w-4 h-4" />
+                          </div>
+                        )}
+                        {(field.type === "radio" || field.type === "checkbox") && (
+                          <div className="space-y-1.5">
+                            {(field.options || []).slice(0, 3).map((opt, i) => (
+                              <div key={i} className="flex items-center gap-2 text-sm text-gray-600">
+                                <div className={`w-4 h-4 border-2 border-gray-300 flex-shrink-0 ${field.type === "radio" ? "rounded-full" : "rounded"}`} />
+                                {opt}
+                              </div>
+                            ))}
+                            {(field.options || []).length > 3 && (
+                              <p className="text-xs text-gray-400 pl-6">+{field.options.length - 3} more options</p>
+                            )}
+                          </div>
+                        )}
+                        {field.type === "rating" && (
+                          <div className="flex gap-1">
+                            {[1,2,3,4,5].map(i => <Star key={i} className="w-6 h-6 text-gray-300" />)}
+                          </div>
+                        )}
+                        {field.type === "file" || field.type === "image" ? (
+                          <div className="w-full px-3 py-4 bg-white border-2 border-dashed border-gray-200 rounded-lg text-sm text-gray-400 text-center pointer-events-none">
+                            📎 Click to upload files
+                          </div>
+                        ) : null}
+                      </div>
+                    )) : selectedTemplate.preview.map((f, i) => (
+                      <div key={i}>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">{f}</label>
+                        <div className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg h-9" />
+                      </div>
+                    ))}
+                    {selectedTemplate.templateFields && selectedTemplate.templateFields.length > 8 && (
+                      <p className="text-center text-xs text-gray-400 pt-1">... and {selectedTemplate.templateFields.length - 8} more fields in the full form</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Footer Buttons */}
+              <div className="flex gap-3 p-6 border-t border-gray-100 flex-shrink-0">
+                <button
+                  onClick={() => { handleUseTemplate(selectedTemplate); setShowPreview(false) }}
+                  className="flex-1 bg-gradient-to-r from-purple-600 to-blue-600 text-white py-3 rounded-xl font-semibold hover:shadow-lg hover:shadow-purple-200 transition-all"
+                >
+                  <Plus className="w-4 h-4 inline mr-2" />
+                  {selectedTemplate.submitButtonText ? `Use Template — "${selectedTemplate.submitButtonText}"` : "Use This Template"}
+                </button>
+                <button
+                  onClick={() => toggleFavorite(selectedTemplate.id)}
+                  className="p-3 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors"
+                  title={favorites.has(selectedTemplate.id) ? "Remove from favorites" : "Save to favorites"}
+                >
+                  {favorites.has(selectedTemplate.id) ? (
+                    <BookmarkCheck className="w-5 h-5 text-red-500" />
+                  ) : (
+                    <Bookmark className="w-5 h-5" />
+                  )}
+                </button>
               </div>
             </motion.div>
           </motion.div>

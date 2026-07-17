@@ -1,5 +1,4 @@
-"use client"
-
+import { useEffect } from "react"
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom"
 import { AuthProvider, useAuth } from "./hooks/use-auth"
 import LandingPage from "./pages/landing-page"
@@ -22,6 +21,14 @@ import ProfileSettings from "./components/profile-settings"
 import Integrations from "./pages/integrations"
 import Webhooks from "./pages/webhooks"
 import Import from "./pages/import"
+import AboutPage from "./pages/about"
+import BlogPage from "./pages/blog"
+import PrivacyPage from "./pages/privacy"
+import TermsPage from "./pages/terms"
+import CookiesPage from "./pages/cookies"
+import DocumentationPage from "./pages/documentation"
+import ApiReferencePage from "./pages/api-reference"
+import StatusPage from "./pages/status"
 
 // Protected Route Component
 function ProtectedRoute({ children }) {
@@ -50,6 +57,14 @@ function AppRoutes() {
       <Route path="/contact" element={<ContactPage />} />
       <Route path="/help" element={<Help />} />
       <Route path="/support" element={<Support />} />
+      <Route path="/about" element={<AboutPage />} />
+      <Route path="/blog" element={<BlogPage />} />
+      <Route path="/privacy" element={<PrivacyPage />} />
+      <Route path="/terms" element={<TermsPage />} />
+      <Route path="/cookies" element={<CookiesPage />} />
+      <Route path="/documentation" element={<DocumentationPage />} />
+      <Route path="/api-reference" element={<ApiReferencePage />} />
+      <Route path="/status" element={<StatusPage />} />
 
       {/* Public form viewer */}
       <Route path="/form/:formId" element={<FormViewer />} />
@@ -168,6 +183,16 @@ function AppRoutes() {
 
 // Main App Component
 export default function App() {
+  useEffect(() => {
+    const theme = localStorage.getItem("theme") || "light"
+    const root = window.document.documentElement
+    if (theme === "dark") {
+      root.classList.add("dark")
+    } else {
+      root.classList.remove("dark")
+    }
+  }, [])
+
   return (
     <AuthProvider>
       <Router>
